@@ -114,6 +114,11 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
     }
   };
 
+  // Helper to strip redundant "Option X —" prefix if present in correctOptionText
+  const cleanOptionText = (text: string) => {
+    return text.replace(/^Option\s+[A-E]\s*(?:—|-|:|\))\s*/i, '');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 relative">
       
@@ -294,10 +299,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                 <CheckCircle2 className="w-6 h-6 text-emerald-400 flex-shrink-0" />
                 <div>
                   <p className="font-bold text-sm">
-                    Correct Choice: Option {currentQuestion.correctOption} — {currentQuestion.correctOptionText}
-                  </p>
-                  <p className="text-xs opacity-80 mt-0.5">
-                    Review the full explanation, real-world scenario example, and why wrong options failed below.
+                    Correct Choice: Option {currentQuestion.correctOption} — {cleanOptionText(currentQuestion.correctOptionText)}
                   </p>
                 </div>
               </div>
@@ -306,7 +308,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-5 space-y-3">
                 <div className="flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Why Option {currentQuestion.correctOption} ({currentQuestion.correctOptionText}) is Correct</span>
+                  <span>Why Option {currentQuestion.correctOption} ({cleanOptionText(currentQuestion.correctOptionText)}) is Correct</span>
                 </div>
                 <p className="text-sm text-emerald-100 leading-relaxed font-medium">
                   {currentQuestion.explanation}
