@@ -1,0 +1,6 @@
+{
+  "name": "AIF-C01 AWS Certified AI Practitioner Exam Prep",
+  "description": "AIF-C01 AWS Certified AI Practitioner practice exam application featuring 29 official questions with highlighted correct answers, detailed explanations, real-world scenario examples, why wrong answers fail, and exam decision tips.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
