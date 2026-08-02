@@ -407,8 +407,6 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           <button
             onClick={() => {
               setActiveSetTab('all');
-              setSelectedDomain('All Domains');
-              setSearchQuery('');
             }}
             className="mt-4 px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold"
           >
