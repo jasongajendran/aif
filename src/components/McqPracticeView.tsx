@@ -260,56 +260,39 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             })}
           </div>
 
-          {/* Reveal Answer Control at Bottom of Question */}
-          <div className="pt-4 border-t border-slate-800/80 mb-6 flex flex-wrap items-center justify-between gap-3">
-            <button
-              onClick={toggleRevealAnswer}
-              disabled={alwaysRevealAnswers}
-              className={`px-4 py-2.5 rounded-xl border transition-all flex items-center space-x-2 text-xs font-bold ${
-                isRevealed
-                  ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
-                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200 shadow-md'
-              } ${alwaysRevealAnswers ? 'cursor-default opacity-90' : 'hover:scale-[1.01]'}`}
-              title="Reveal or hide the correct answer and detailed explanation"
-            >
-              {isRevealed ? <EyeOff className="w-4 h-4 text-emerald-400" /> : <Eye className="w-4 h-4 text-amber-400" />}
-              <span>
-                {alwaysRevealAnswers 
-                  ? 'Answer & Detailed Explanation Revealed (Always Mode Active)' 
-                  : isRevealed ? 'Hide Answer & Explanation' : 'Reveal Answer & Detailed Explanation'}
-              </span>
-            </button>
+          {/* Reveal Answer Control at Bottom of Question (only when not in Always Reveal Mode) */}
+          {!alwaysRevealAnswers && (
+            <div className="pt-4 border-t border-slate-800/80 mb-6 flex flex-wrap items-center justify-between gap-3">
+              <button
+                onClick={toggleRevealAnswer}
+                className={`px-4 py-2.5 rounded-xl border transition-all flex items-center space-x-2 text-xs font-bold ${
+                  isRevealed
+                    ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
+                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200 shadow-md'
+                } hover:scale-[1.01]`}
+                title="Reveal or hide the correct answer and detailed explanation"
+              >
+                {isRevealed ? <EyeOff className="w-4 h-4 text-emerald-400" /> : <Eye className="w-4 h-4 text-amber-400" />}
+                <span>
+                  {isRevealed ? 'Hide Answer & Explanation' : 'Reveal Answer & Detailed Explanation'}
+                </span>
+              </button>
 
-            {!alwaysRevealAnswers && (
               <button
                 onClick={onToggleAlwaysReveal}
                 className="text-xs text-amber-400 hover:text-amber-300 underline font-medium"
               >
                 Turn on "Always Reveal Answers" for all questions
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Answer Breakdown & Detailed Explanations Panel */}
           {isRevealed && (
-            <div className="space-y-6 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="space-y-4 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
               
-              {/* Verdict Banner */}
-              <div className="p-4 rounded-xl border bg-emerald-950/40 border-emerald-500/60 text-emerald-300 flex items-center space-x-3">
-                <CheckCircle2 className="w-6 h-6 text-emerald-400 flex-shrink-0" />
-                <div>
-                  <p className="font-bold text-sm">
-                    Correct Choice: Option {currentQuestion.correctOption} — {cleanOptionText(currentQuestion.correctOptionText)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Why Correct Section with Scenario Example */}
+              {/* Correct Answer Explanation with Scenario Example */}
               <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-5 space-y-3">
-                <div className="flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Why Option {currentQuestion.correctOption} ({cleanOptionText(currentQuestion.correctOptionText)}) is Correct</span>
-                </div>
                 <p className="text-sm text-emerald-100 leading-relaxed font-medium">
                   {currentQuestion.explanation}
                 </p>
@@ -322,11 +305,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               </div>
 
               {/* Why Wrong Answers are Wrong Section */}
-              <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5 space-y-3">
-                <div className="flex items-center space-x-2 text-rose-400 text-xs font-bold uppercase tracking-wider">
-                  <XCircle className="w-4 h-4" />
-                  <span>Why Wrong Options Fail the Requirements</span>
-                </div>
+              <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5">
                 <div className="grid gap-2.5">
                   {currentQuestion.options.map((opt) => {
                     if (opt.id === currentQuestion.correctOption) return null;
@@ -343,12 +322,6 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
               {/* Exam Tip & Keyword Clues Callout */}
               <div className="bg-gradient-to-r from-amber-950/40 to-slate-900 border border-amber-500/40 rounded-xl p-5 space-y-3 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-                    <Lightbulb className="w-4 h-4" />
-                    <span>AIF-C01 Exam Tip & Decision Rule</span>
-                  </div>
-                </div>
                 <p className="text-sm font-medium text-amber-100 leading-relaxed">
                   {currentQuestion.examTip}
                 </p>
