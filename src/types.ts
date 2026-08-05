@@ -21,7 +21,7 @@ export interface Question {
   scenario: string;
   questionText: string;
   options: Option[];
-  correctOption: string;
+  correctOption: string | string[];
   correctOptionText: string;
   explanation: string;
   wrongOptionsExplanation: Record<string, string>;
@@ -41,5 +41,21 @@ export interface UserProgress {
   bookmarks: number[];
 }
 
-export type ViewMode = 'practice';
+export type ViewMode = 'practice' | 'visualizations' | 'ready-reckoner';
+
+export type ReckonerTab = 
+  | 'comparison-tables'
+  | 'logic-flows'
+  | 'code-snippets'
+  | 'exam-golden-rules'
+  | 'domain-cheat-sheets';
+
+export type VisualizationTab = 
+  | 'rag-architecture'
+  | 'model-customization'
+  | 'bedrock-guardrails'
+  | 'sagemaker-lifecycle'
+  | 'service-decision-tree'
+  | 'confusion-matrix'
+  | 'exam-domain-analytics';
 

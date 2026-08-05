@@ -10,6 +10,10 @@ interface McqPracticeViewProps {
   questions: Question[];
   alwaysRevealAnswers: boolean;
   onToggleAlwaysReveal: () => void;
+  selectedQuestionId?: number;
+  onSelectQuestionId?: (questionId: number) => void;
+  onOpenVisualizations?: () => void;
+  onOpenReadyReckoner?: () => void;
 }
 
 const CHUNK_SIZE = 50;
@@ -18,9 +22,33 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   questions,
   alwaysRevealAnswers,
   onToggleAlwaysReveal,
+  selectedQuestionId: propSelectedQuestionId,
+  onSelectQuestionId: propOnSelectQuestionId,
+  onOpenVisualizations,
+  onOpenReadyReckoner,
 }) => {
-  const [selectedQuestionId, setSelectedQuestionId] = useState<number>(1);
-  const [activeSetTab, setActiveSetTab] = useState<number | 'all'>(1); // Tab 1 = Q1-Q50, Tab 2 = Q51-Q100, etc.
+  const [internalSelectedQuestionId, setInternalSelectedQuestionId] = useState<number>(1);
+  const selectedQuestionId = propSelectedQuestionId !== undefined ? propSelectedQuestionId : internalSelectedQuestionId;
+
+  const setSelectedQuestionId = (id: number) => {
+    setInternalSelectedQuestionId(id);
+    propOnSelectQuestionId?.(id);
+  };
+
+  const [activeSetTab, setActiveSetTab] = useState<number | 'all'>(() => {
+    const initId = propSelectedQuestionId || 1;
+    return Math.ceil(initId / CHUNK_SIZE) || 1;
+  });
+
+  // Sync set tab if external selectedQuestionId changes
+  useEffect(() => {
+    if (propSelectedQuestionId !== undefined) {
+      const neededSet = Math.ceil(propSelectedQuestionId / CHUNK_SIZE);
+      if (activeSetTab !== 'all' && activeSetTab !== neededSet) {
+        setActiveSetTab(neededSet);
+      }
+    }
+  }, [propSelectedQuestionId]);
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [showQuestionGrid, setShowQuestionGrid] = useState<boolean>(true);
 
@@ -253,6 +281,29 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                 {currentQuestion.topic}
               </span>
             </div>
+
+            <div className="flex items-center gap-2">
+              {onOpenVisualizations && (
+                <button
+                  onClick={onOpenVisualizations}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 hover:text-amber-300 text-xs font-bold flex items-center space-x-1.5 transition-all shadow-sm"
+                  title="Switch to Interactive Architecture & Concept Visualizers"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Visualizers</span>
+                </button>
+              )}
+              {onOpenReadyReckoner && (
+                <button
+                  onClick={onOpenReadyReckoner}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-bold flex items-center space-x-1.5 transition-all shadow-sm"
+                  title="Switch to Exam Ready Reckoner & Memory Hub"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Ready Reckoner</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Scenario Context Block */}
@@ -273,7 +324,9 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           <div className="space-y-3.5 mb-6">
             {currentQuestion.options.map((option) => {
               const isSelected = userPickedOption === option.id;
-              const isCorrectOption = option.id === currentQuestion.correctOption;
+              const isCorrectOption = Array.isArray(currentQuestion.correctOption)
+                ? currentQuestion.correctOption.includes(option.id)
+                : option.id === currentQuestion.correctOption;
 
               let optionStyle = 'bg-slate-800/80 border-slate-700 hover:bg-slate-800 hover:border-slate-500 text-slate-100';
               let badgeStyle = 'bg-slate-800 border-slate-600 text-slate-200';
@@ -372,7 +425,10 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-5 sm:p-6">
                 <div className="grid gap-3">
                   {currentQuestion.options.map((opt) => {
-                    if (opt.id === currentQuestion.correctOption) return null;
+                    const isCorrect = Array.isArray(currentQuestion.correctOption)
+                      ? currentQuestion.correctOption.includes(opt.id)
+                      : opt.id === currentQuestion.correctOption;
+                    if (isCorrect) return null;
                     const explanation = currentQuestion.wrongOptionsExplanation[opt.id];
                     return (
                       <div key={opt.id} className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 sm:p-4 text-sm sm:text-base text-slate-200 leading-relaxed">

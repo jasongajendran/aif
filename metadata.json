@@ -1,6 +1,6 @@
 {
   "name": "AIF-C01 AWS Certified AI Practitioner Exam Prep",
-  "description": "AIF-C01 AWS Certified AI Practitioner practice exam application featuring 446 practice questions across 16 parts with detailed explanations, scenario examples, wrong option breakdowns, and exam tips.",
+  "description": "AIF-C01 AWS Certified AI Practitioner practice exam application featuring 446 practice questions across 16 parts with interactive visual architecture diagrams, RAG flows, model customization spectrum, Bedrock Guardrails, SageMaker lifecycle, and ML metrics simulator.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
