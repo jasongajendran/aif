@@ -1,15 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { comparisonTables, ComparisonTable } from './reckonerData';
-import { Table, Search, Sparkles, AlertTriangle, CheckCircle2, Filter, Layers, ArrowRight } from 'lucide-react';
+import { 
+  Table, Search, Sparkles, AlertTriangle, CheckCircle2, 
+  Filter, Layers, ArrowRight, ArrowLeft, LayoutGrid, LayoutList, 
+  BookOpen, ChevronLeft, ChevronRight, ChevronDown, ListFilter
+} from 'lucide-react';
 
 interface ComparisonTablesProps {
   onSelectQuestion?: (questionId: number) => void;
 }
 
-export const ComparisonTables: React.FC<ComparisonTablesProps> = () => {
+export const ComparisonTables: React.FC<ComparisonTablesProps> = ({ onSelectQuestion }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTableId, setActiveTableId] = useState<string>(comparisonTables[0].id);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
 
   const filteredTables = useMemo(() => {
     return comparisonTables.filter((table) => {
@@ -17,26 +24,48 @@ export const ComparisonTables: React.FC<ComparisonTablesProps> = () => {
       const matchesSearch = searchQuery.trim() === '' || 
         table.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         table.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        table.rows.some(r => r.feature.toLowerCase().includes(searchQuery.toLowerCase()) || r.values.some(v => v.toLowerCase().includes(searchQuery.toLowerCase())));
+        table.rows.some(r => 
+          r.feature.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          r.values.some(v => v.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          r.examTip.toLowerCase().includes(searchQuery.toLowerCase())
+        );
       return matchesCategory && matchesSearch;
     });
   }, [selectedCategory, searchQuery]);
 
-  const activeTable = filteredTables.find(t => t.id === activeTableId) || filteredTables[0] || comparisonTables[0];
+  const currentIndex = filteredTables.findIndex(t => t.id === activeTableId);
+  const activeTable = (currentIndex >= 0 ? filteredTables[currentIndex] : filteredTables[0]) || comparisonTables[0];
+  const actualIndex = filteredTables.findIndex(t => t.id === activeTable.id);
+  const prevTable = actualIndex > 0 ? filteredTables[actualIndex - 1] : null;
+  const nextTable = actualIndex < filteredTables.length - 1 ? filteredTables[actualIndex + 1] : null;
+
+  const handleSelectTable = (tableId: string) => {
+    setActiveTableId(tableId);
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -220 : 220;
+      tabsScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const categories = [
-    { id: 'all', label: 'All Tables' },
-    { id: 'core-services', label: 'AWS Services' },
-    { id: 'genai-techniques', label: 'GenAI & Customization' },
-    { id: 'governance', label: 'Governance & Clarify' },
-    { id: 'metrics', label: 'Evaluation Metrics' },
+    { id: 'all', label: 'All Tables', count: comparisonTables.length },
+    { id: 'core-services', label: 'AWS Services', count: comparisonTables.filter(t => t.category === 'core-services').length },
+    { id: 'genai-techniques', label: 'GenAI & Customization', count: comparisonTables.filter(t => t.category === 'genai-techniques').length },
+    { id: 'governance', label: 'Governance & Clarify', count: comparisonTables.filter(t => t.category === 'governance').length },
+    { id: 'metrics', label: 'Evaluation Metrics', count: comparisonTables.filter(t => t.category === 'metrics').length },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5" ref={tableContainerRef}>
       
       {/* Search & Category Filter Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-md">
+      <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-3xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-xl">
         
         {/* Search */}
         <div className="relative flex-1">
@@ -46,202 +75,315 @@ export const ComparisonTables: React.FC<ComparisonTablesProps> = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search across all comparison tables, differences, metrics, and services..."
-            className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 transition-colors"
+            className="w-full bg-slate-950 border border-slate-700/80 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 transition-colors"
           />
         </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-          <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0 mr-1 hidden sm:inline" />
+        {/* View Toggle & Category Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === 'table' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+              title="Table View"
+            >
+              <LayoutList className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === 'cards' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+              title="Card Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center space-x-1.5 ${
                 selectedCategory === cat.id
-                  ? 'bg-amber-500 text-slate-950 shadow-sm font-bold'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
               }`}
             >
-              {cat.label}
+              <span>{cat.label}</span>
+              <span className={`text-[10px] px-1 rounded ${
+                selectedCategory === cat.id ? 'bg-slate-950 text-amber-400' : 'bg-slate-900 text-slate-400'
+              }`}>
+                {cat.count}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Table Selector Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-        {filteredTables.map((table) => {
-          const isActive = table.id === activeTable.id;
-          return (
-            <button
-              key={table.id}
-              onClick={() => setActiveTableId(table.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all border flex items-center space-x-2 shrink-0 ${
-                isActive
-                  ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/60 text-amber-300 shadow-md ring-1 ring-amber-500/40'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
-              }`}
-            >
-              <Table className="w-3.5 h-3.5 text-amber-400" />
-              <span>{table.title.split('(')[0].trim()}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
-                {table.badge}
-              </span>
-            </button>
-          );
-        })}
+      {/* Table Selector Navigation Bar */}
+      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-2 sm:p-2.5 flex items-center justify-between gap-2 shadow-lg">
+        
+        {/* Left Scroll Arrow */}
+        <button
+          onClick={() => scrollTabs('left')}
+          className="w-7 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center shrink-0 hidden sm:flex"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        {/* Tables Horizontal List */}
+        <div
+          ref={tabsScrollRef}
+          className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 px-1 w-full"
+        >
+          {filteredTables.map((table, idx) => {
+            const isActive = table.id === activeTable?.id;
+            return (
+              <button
+                key={table.id}
+                onClick={() => handleSelectTable(table.id)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center space-x-2 shrink-0 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500 text-amber-300 shadow-md ring-1 ring-amber-500/50'
+                    : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                }`}
+              >
+                <span className={`w-4 h-4 rounded-full text-[10px] font-mono font-bold flex items-center justify-center ${
+                  isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {idx + 1}
+                </span>
+                <Table className="w-3.5 h-3.5 text-amber-400" />
+                <span>{table.title.split('(')[0].trim()}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right Scroll Arrow */}
+        <button
+          onClick={() => scrollTabs('right')}
+          className="w-7 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center shrink-0 hidden sm:flex"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        {/* Quick Prev / Next Table arrows */}
+        <div className="flex items-center space-x-1 shrink-0 pl-1 border-l border-slate-800">
+          <button
+            onClick={() => prevTable && handleSelectTable(prevTable.id)}
+            disabled={!prevTable}
+            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
+              prevTable
+                ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                : 'bg-slate-900/40 text-slate-600 border-slate-800/40 cursor-not-allowed'
+            }`}
+            title={prevTable ? `Previous: ${prevTable.title}` : 'No previous table'}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <span className="text-[11px] font-mono text-slate-400 font-bold px-1 hidden md:inline">
+            {actualIndex + 1}/{filteredTables.length}
+          </span>
+
+          <button
+            onClick={() => nextTable && handleSelectTable(nextTable.id)}
+            disabled={!nextTable}
+            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
+              nextTable
+                ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                : 'bg-slate-900/40 text-slate-600 border-slate-800/40 cursor-not-allowed'
+            }`}
+            title={nextTable ? `Next: ${nextTable.title}` : 'No next table'}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
       </div>
 
       {/* Active Table Display */}
       {activeTable ? (
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="bg-slate-900/95 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-0">
           
           {/* Header Banner */}
-          <div className="p-5 sm:p-6 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-850">
+          <div className="p-5 sm:p-7 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-850">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
               <div className="flex items-center space-x-2">
-                <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-black uppercase tracking-wider">
                   {activeTable.badge}
                 </span>
-                <span className="text-xs text-slate-400">
-                  AIF-C01 Cheat Sheet
+                <span className="text-xs text-slate-400 font-mono">
+                  Table {actualIndex + 1} of {filteredTables.length}
                 </span>
+              </div>
+
+              {/* Prev / Next Table buttons in header */}
+              <div className="flex items-center space-x-2">
+                {prevTable && (
+                  <button
+                    onClick={() => handleSelectTable(prevTable.id)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Prev Table</span>
+                  </button>
+                )}
+                {nextTable && (
+                  <button
+                    onClick={() => handleSelectTable(nextTable.id)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
+                  >
+                    <span className="hidden sm:inline">Next Table</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
             
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-white tracking-tight">
               {activeTable.title}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed max-w-4xl">
               {activeTable.description}
             </p>
           </div>
 
-          {/* Table Container */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-950/80 border-b border-slate-800">
-                  {activeTable.columns.map((col, idx) => (
-                    <th
-                      key={idx}
-                      className={`p-3.5 sm:p-4 text-xs font-bold uppercase tracking-wider text-slate-300 ${
-                        idx === 0 ? 'min-w-[160px] sm:min-w-[200px] text-amber-400' : 'min-w-[220px]'
-                      }`}
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/80 text-xs sm:text-sm">
-                {activeTable.rows.map((row, rIdx) => (
-                  <tr
-                    key={rIdx}
-                    className={`transition-colors ${
-                      row.highlight
-                        ? 'bg-amber-950/15 hover:bg-amber-950/25'
-                        : rIdx % 2 === 0
-                        ? 'bg-slate-900/40 hover:bg-slate-800/60'
-                        : 'bg-slate-900/80 hover:bg-slate-800/60'
-                    }`}
-                  >
-                    {/* Feature Title / First Column */}
-                    <td className="p-3.5 sm:p-4 font-semibold text-slate-200 align-top">
-                      <div className="flex items-start space-x-1.5">
-                        {row.highlight && (
-                          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                        )}
-                        <span>{row.feature}</span>
-                      </div>
-                      {row.examTip && (
-                        <div className="mt-2 text-[11px] font-normal text-amber-300/90 bg-amber-950/40 border border-amber-800/40 rounded-lg p-2 leading-tight flex items-start space-x-1">
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>{row.examTip}</span>
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Value Columns */}
-                    {row.values.map((val, vIdx) => (
-                      <td
-                        key={vIdx}
-                        className="p-3.5 sm:p-4 text-slate-300 align-top leading-relaxed"
+          {/* Render Mode: Table */}
+          {viewMode === 'table' ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-950/90 border-b border-slate-800">
+                    {activeTable.columns.map((col, idx) => (
+                      <th
+                        key={idx}
+                        className={`p-4 text-xs font-bold uppercase tracking-wider text-slate-300 ${
+                          idx === 0 ? 'min-w-[180px] text-amber-400' : 'min-w-[220px]'
+                        }`}
                       >
-                        <div className="whitespace-pre-line">
-                          {val}
+                        {col}
+                      </th>
+                    ))}
+                    <th className="p-4 text-xs font-bold uppercase tracking-wider text-amber-400 min-w-[280px]">
+                      ★ Key Exam Clue & Distractor Alert
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/80 text-xs sm:text-sm">
+                  {activeTable.rows.map((row, rIdx) => (
+                    <tr
+                      key={rIdx}
+                      className="hover:bg-slate-800/40 transition-colors group"
+                    >
+                      <td className="p-4 font-bold text-white align-top">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+                          <span>{row.feature}</span>
                         </div>
                       </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      {row.values.map((val, vIdx) => (
+                        <td key={vIdx} className="p-4 text-slate-300 align-top leading-relaxed">
+                          {val}
+                        </td>
+                      ))}
+                      <td className="p-4 align-top">
+                        <div className="bg-amber-950/20 border border-amber-800/40 rounded-xl p-3 text-xs text-amber-200 leading-relaxed font-medium space-y-1.5">
+                          <div className="flex items-center space-x-1.5 text-amber-400 font-bold">
+                            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                            <span>Exam Takeaway:</span>
+                          </div>
+                          <p>{row.examTip}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            /* Render Mode: Side-by-Side Cards */
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeTable.rows.map((row, rIdx) => (
+                <div
+                  key={rIdx}
+                  className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg hover:border-slate-700 transition-all flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+                      <h4 className="text-base font-bold text-white">{row.feature}</h4>
+                    </div>
 
-          {/* Key Takeaway Footer */}
-          <div className="p-4 sm:p-5 bg-slate-950/90 border-t border-slate-800 flex items-start space-x-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      {row.values.map((val, vIdx) => (
+                        <div key={vIdx} className="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-slate-400 font-bold block">
+                            {activeTable.columns[vIdx + 1] || `Option ${vIdx + 1}`}
+                          </span>
+                          <p className="text-slate-200 leading-relaxed">{val}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-950/30 border border-amber-800/40 rounded-xl p-3 text-xs text-amber-200 space-y-1 mt-2">
+                    <strong className="text-amber-300 font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      Exam Clue:
+                    </strong>
+                    <p className="leading-relaxed">{row.examTip}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Bottom Table Step Navigator */}
+          <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-950/90 flex items-center justify-between gap-3">
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-0.5">
-                Exam Key Takeaway & Golden Rule
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
-                {activeTable.keyTakeaway}
-              </p>
+              {prevTable ? (
+                <button
+                  onClick={() => handleSelectTable(prevTable.id)}
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 text-xs font-bold text-slate-200 hover:text-white transition-all flex items-center space-x-2"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span className="line-clamp-1">Prev: {prevTable.title.split('(')[0].trim()}</span>
+                </button>
+              ) : (
+                <span className="text-xs font-mono text-slate-600">First comparison table</span>
+              )}
+            </div>
+
+            <div className="text-xs font-mono text-slate-400 font-bold hidden sm:block">
+              Table {actualIndex + 1} of {filteredTables.length}
+            </div>
+
+            <div>
+              {nextTable ? (
+                <button
+                  onClick={() => handleSelectTable(nextTable.id)}
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 text-xs font-bold text-slate-200 hover:text-white transition-all flex items-center space-x-2"
+                >
+                  <span className="line-clamp-1">Next: {nextTable.title.split('(')[0].trim()}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <span className="text-xs font-mono text-slate-600">Last comparison table</span>
+              )}
             </div>
           </div>
 
         </div>
       ) : (
-        <div className="p-12 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800">
-          No comparison tables matched your search query. Try clearing filters.
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-400">
+          No comparison tables matched your search query.
         </div>
       )}
-
-      {/* Quick Tips Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-1.5">
-          <div className="flex items-center space-x-2 text-amber-400 text-xs font-bold uppercase">
-            <Layers className="w-4 h-4" />
-            <span>Fast Recall Rule</span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            <strong className="text-white">OCR / Documents:</strong> Textract<br/>
-            <strong className="text-white">Text NLP / PII:</strong> Comprehend<br/>
-            <strong className="text-white">Vision / PPE:</strong> Rekognition<br/>
-            <strong className="text-white">Audio to Text:</strong> Transcribe<br/>
-            <strong className="text-white">Text to Audio:</strong> Polly
-          </p>
-        </div>
-
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-1.5">
-          <div className="flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Governance Rule</span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            <strong className="text-white">AWS Services:</strong> AI Service Cards<br/>
-            <strong className="text-white">Custom Models:</strong> Model Cards<br/>
-            <strong className="text-white">Pre/Post Bias & SHAP:</strong> Clarify<br/>
-            <strong className="text-white">Production Drift:</strong> Model Monitor
-          </p>
-        </div>
-
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-1.5">
-          <div className="flex items-center space-x-2 text-cyan-400 text-xs font-bold uppercase">
-            <Sparkles className="w-4 h-4" />
-            <span>GenAI Adaptation</span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            <strong className="text-white">Dynamic Private Docs:</strong> RAG<br/>
-            <strong className="text-white">Proprietary Format/Tone:</strong> Fine-Tuning<br/>
-            <strong className="text-white">Raw Domain Vocabulary:</strong> Continued Pre-training<br/>
-            <strong className="text-white">Reasoning / Steps:</strong> Chain-of-Thought
-          </p>
-        </div>
-      </div>
 
     </div>
   );

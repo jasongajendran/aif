@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  Compass, CheckCircle2, ArrowRight, Sparkles, AlertTriangle, 
-  Layers, Search, FileText, Eye, Mic, Volume2, MessageSquare, 
-  Code2, Shield, Brain, Cpu
+  Compass, Search, ArrowRight, CheckCircle2, AlertTriangle, 
+  Sparkles, BookOpen, Layers, GitBranch, Cpu, FileText, 
+  Mic, Eye, MessageSquare, Shield, HelpCircle, Server, Code, Volume2
 } from 'lucide-react';
 
 interface ServiceDecisionTreeVisualizerProps {
@@ -10,227 +10,420 @@ interface ServiceDecisionTreeVisualizerProps {
 }
 
 export const ServiceDecisionTreeVisualizer: React.FC<ServiceDecisionTreeVisualizerProps> = ({ onSelectQuestion }) => {
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('document');
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>('ocr-tables');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const serviceCategories = [
+  const examScenarios = [
     {
-      id: 'document',
-      name: 'Document & OCR',
-      icon: FileText,
-      service: 'Amazon Textract',
-      tagline: 'Scanned PDFs, forms, invoices, and structured tables.',
-      triggerKeywords: ['scanned PDF', 'key-value pairs', 'extract tables', 'forms', 'OCR with structure'],
-      description: 'Automatically extracts printed text, handwriting, forms (key-value pairs like Name, Income), and structured tables from scanned documents and PDFs.',
-      commonDistractors: ['Amazon Comprehend (does NLP on raw text, cannot parse PDF layout/tables)', 'Amazon Rekognition (for general photos/objects)'],
-      relatedQuestions: [433],
-    },
-    {
-      id: 'developer',
-      name: 'IDE Coding Assistant',
-      icon: Code2,
-      service: 'Amazon Q Developer',
-      tagline: 'Code suggestions, legacy code explanation, unit tests.',
-      triggerKeywords: ['IDE assistant', 'generate unit tests', 'explain legacy code', 'code generation in VS Code', 'MCP servers CLI'],
-      description: 'Generative AI assistant purpose-built for software engineering teams. Integrates directly into IDEs (VS Code, JetBrains, Cloud9) to write code, generate tests, explain logic, and upgrade versions.',
-      commonDistractors: ['Amazon CodeCatalyst (DevOps workflow management, not AI coding assistant)', 'Amazon Kendra (enterprise search)'],
-      relatedQuestions: [424, 430],
-    },
-    {
-      id: 'genai-api',
-      name: 'Multi-Model GenAI API',
-      icon: Sparkles,
-      service: 'Amazon Bedrock',
-      tagline: 'Serverless API for Claude, Nova, Llama, Mistral, Cohere.',
-      triggerKeywords: ['multi-provider foundation models', 'serverless API', 'no infrastructure management', 'Claude, Llama, Nova'],
-      description: 'Fully managed service offering unified API access to leading foundation models from Amazon, Anthropic, Meta, Mistral, and Cohere, plus Knowledge Bases, Guardrails, and Agents.',
-      commonDistractors: ['Amazon SageMaker JumpStart (model hub requiring endpoint deployment management)', 'Amazon Lex (chatbots only)'],
-      relatedQuestions: [441, 429, 443],
-    },
-    {
-      id: 'nlp-analytics',
-      name: 'Text & NLP Analytics',
-      icon: MessageSquare,
-      service: 'Amazon Comprehend',
-      tagline: 'Sentiment analysis, entity recognition, PII detection in text.',
-      triggerKeywords: ['sentiment analysis', 'detect entities in raw text', 'key phrases', 'language detection', 'Comprehend Medical'],
-      description: 'Natural Language Processing (NLP) service that uses machine learning to uncover insights, relationships, sentiment, and PII in unstructured text.',
-      commonDistractors: ['Amazon Textract (for OCR/document layout parsing)', 'Amazon Transcribe (for audio speech)'],
+      id: 'ocr-tables',
+      title: 'Extract structured tables & key-value pairs from scanned PDFs',
+      category: 'Document & OCR',
+      winningService: 'Amazon Textract',
+      serviceIcon: FileText,
+      serviceColor: 'text-amber-400 border-amber-500/40 bg-amber-950/20',
+      reasoning: 'Amazon Textract goes beyond simple optical character recognition (OCR) to extract tabular layouts, form relationships, and query values from scanned documents without manual ML training.',
+      distractorTrap: 'Amazon Rekognition is for general images/faces/objects, NOT structured document form parsing. Amazon Comprehend extracts sentiment/entities from raw text, not PDF layouts.',
+      examTrigger: 'Key-value pairs, tables from PDFs, scanned forms ➔ Textract',
       relatedQuestions: [433, 441],
     },
     {
-      id: 'vision',
-      name: 'Computer Vision',
-      icon: Eye,
-      service: 'Amazon Rekognition',
-      tagline: 'Object detection, facial analysis, content moderation.',
-      triggerKeywords: ['detect objects in images', 'facial analysis', 'content moderation', 'custom labels', 'video stream analysis'],
-      description: 'Automates image and video analysis to identify objects, people, text, scenes, activities, and inappropriate content.',
-      commonDistractors: ['Amazon Textract (for text & tables in PDF documents)', 'SageMaker (if pre-built vision API is sufficient)'],
-      relatedQuestions: [433],
+      id: 'pii-redaction',
+      title: 'Redact social security numbers and PII from customer chat logs',
+      category: 'NLP & Language',
+      winningService: 'Amazon Comprehend (or Bedrock Guardrails)',
+      serviceIcon: MessageSquare,
+      serviceColor: 'text-sky-400 border-sky-500/40 bg-sky-950/20',
+      reasoning: 'Amazon Comprehend natively identifies and masks Personally Identifiable Information (PII) entities in unstructured text. (If using Foundation Models, Amazon Bedrock Guardrails Layer 3 also masks PII).',
+      distractorTrap: 'Do not train a custom SageMaker NER model when Amazon Comprehend provides pre-trained PII detection APIs.',
+      examTrigger: 'PII detection, sentiment analysis, entity extraction in raw text ➔ Comprehend',
+      relatedQuestions: [425, 431],
     },
     {
-      id: 'speech-to-text',
-      name: 'Speech-to-Text',
-      icon: Mic,
-      service: 'Amazon Transcribe',
-      tagline: 'Convert spoken audio and meetings into text transcripts.',
-      triggerKeywords: ['speech to text', 'audio transcription', 'call center audio', 'subtitles', 'speaker identification'],
-      description: 'Uses automatic speech recognition (ASR) to convert speech in audio and video files into accurate, time-stamped text transcripts.',
-      commonDistractors: ['Amazon Polly (converts text to speech, opposite direction)', 'Amazon Comprehend (analyzes text after transcription)'],
-      relatedQuestions: [433],
+      id: 'audio-transcribe',
+      title: 'Convert recorded customer service phone calls into text transcripts',
+      category: 'Speech & Audio',
+      winningService: 'Amazon Transcribe',
+      serviceIcon: Mic,
+      serviceColor: 'text-emerald-400 border-emerald-500/40 bg-emerald-950/20',
+      reasoning: 'Amazon Transcribe uses automatic speech recognition (ASR) to convert speech-to-text with multi-channel audio support, custom vocabularies, and speaker diarization.',
+      distractorTrap: 'Amazon Polly is text-to-speech (synthesizing voice), whereas Amazon Transcribe is speech-to-text.',
+      examTrigger: 'Call center audio to text, speaker diarization ➔ Transcribe',
+      relatedQuestions: [437],
     },
     {
       id: 'text-to-speech',
-      name: 'Text-to-Speech',
-      icon: Volume2,
-      service: 'Amazon Polly',
-      tagline: 'Turn written text into lifelike spoken audio.',
-      triggerKeywords: ['text to speech', 'synthesize lifelike speech', 'neural TTS', 'audio narration for articles'],
-      description: 'Converts written text into natural-sounding spoken audio in multiple languages and accents using advanced deep learning technologies.',
-      commonDistractors: ['Amazon Transcribe (converts audio to text)', 'Amazon Lex (conversational bot engine)'],
-      relatedQuestions: [],
+      title: 'Synthesize natural, human-like voice audio from written blog articles',
+      category: 'Speech & Audio',
+      winningService: 'Amazon Polly',
+      serviceIcon: Volume2,
+      serviceColor: 'text-purple-400 border-purple-500/40 bg-purple-950/20',
+      reasoning: 'Amazon Polly uses deep learning speech synthesis to convert text into lifelike spoken audio with Neural TTS (NTTS) and SSML tag support.',
+      distractorTrap: 'Amazon Transcribe converts audio to text; Polly converts text to audio.',
+      examTrigger: 'Text to lifelike voice, neural speech synthesis ➔ Polly',
+      relatedQuestions: [437],
     },
     {
-      id: 'compliance-evidence',
-      name: 'Compliance Auditing',
-      icon: Shield,
-      service: 'AWS Audit Manager',
-      tagline: 'Automated evidence collection for Generative AI Frameworks.',
-      triggerKeywords: ['Audit Manager', 'Generative AI Best Practices Framework', 'continuous compliance evidence', 'audit documentation'],
-      description: 'Continuously audits AWS usage to simplify risk assessment and compliance with regulations and generative AI best practice frameworks.',
-      commonDistractors: ['AWS Artifact (provides AWS on-demand compliance reports, not evidence on customer workloads)', 'Amazon Macie (PII in S3)'],
+      id: 'rag-knowledge',
+      title: 'Answer user queries from enterprise PDFs with source citations',
+      category: 'GenAI & LLMs',
+      winningService: 'Amazon Bedrock Knowledge Bases',
+      serviceIcon: Sparkles,
+      serviceColor: 'text-rose-400 border-rose-500/40 bg-rose-950/20',
+      reasoning: 'Bedrock Knowledge Bases provides a fully managed RAG pipeline that handles document parsing, chunking, embedding, vector store synchronization, and model augmentation.',
+      distractorTrap: 'Do not build a custom embedding cluster on EC2 or fine-tune model weights when RAG satisfies the dynamic knowledge requirement.',
+      examTrigger: 'Dynamic internal data, source citations, zero model weight modification ➔ Bedrock Knowledge Bases',
+      relatedQuestions: [421, 423, 426, 427, 443],
+    },
+    {
+      id: 'ide-coding',
+      title: 'Generate unit tests, explain code, and transform legacy Java in IDE',
+      category: 'Developer Tools',
+      winningService: 'Amazon Q Developer',
+      serviceIcon: Code,
+      serviceColor: 'text-cyan-400 border-cyan-500/40 bg-cyan-950/20',
+      reasoning: 'Amazon Q Developer is the generative AI developer assistant integrated directly into VS Code, JetBrains IDEs, and AWS Console for code generation, vulnerability scanning, and code transformation.',
+      distractorTrap: 'Amazon CodeGuru is for automated static code review and profiling; Amazon Q Developer is the conversational generative coding assistant.',
+      examTrigger: 'In-IDE code generation, unit test creation, legacy upgrade ➔ Amazon Q Developer',
       relatedQuestions: [432],
+    },
+    {
+      id: 'model-governance',
+      title: 'Document ML model business purpose, assumptions, and risk ratings',
+      category: 'Governance',
+      winningService: 'SageMaker Model Cards',
+      serviceIcon: Shield,
+      serviceColor: 'text-amber-400 border-amber-500/40 bg-amber-950/20',
+      reasoning: 'SageMaker Model Cards are standardized digital fact sheets that centralize metadata, intended uses, risk ratings, and evaluation metrics for custom ML models throughout their lifecycle.',
+      distractorTrap: 'AWS AI Service Cards document pre-trained AWS services (like Rekognition/Textract), whereas SageMaker Model Cards document CUSTOM models.',
+      examTrigger: 'Standardized fact sheet for custom ML models ➔ SageMaker Model Cards',
+      relatedQuestions: [440, 444],
+    },
+    {
+      id: 'endpoint-drift',
+      title: 'Continuously detect feature attribution drift and data drift in production',
+      category: 'MLOps & Monitoring',
+      winningService: 'SageMaker Model Monitor',
+      serviceIcon: Server,
+      serviceColor: 'text-rose-400 border-rose-500/40 bg-rose-950/20',
+      reasoning: 'SageMaker Model Monitor automatically inspects incoming inference requests and compares statistical baselines to detect data drift, model quality drift, and feature attribution drift.',
+      distractorTrap: 'CloudWatch alarms monitor server CPU/latency, but Model Monitor detects mathematical statistical data drift.',
+      examTrigger: 'Detect data drift or concept drift on deployed endpoints ➔ SageMaker Model Monitor',
+      relatedQuestions: [425, 440],
     },
   ];
 
-  const currentCategory = serviceCategories.find((c) => c.id === selectedCategoryId) || serviceCategories[0];
-  const IconComp = currentCategory.icon;
+  const categories = ['all', 'Document & OCR', 'NLP & Language', 'Speech & Audio', 'GenAI & LLMs', 'Developer Tools', 'Governance', 'MLOps & Monitoring'];
+
+  const filteredScenarios = useMemo(() => {
+    return examScenarios.filter((s) => {
+      const matchesCategory = selectedCategory === 'all' || s.category === selectedCategory;
+      const qLower = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || 
+        s.title.toLowerCase().includes(qLower) ||
+        s.winningService.toLowerCase().includes(qLower) ||
+        s.reasoning.toLowerCase().includes(qLower) ||
+        s.examTrigger.toLowerCase().includes(qLower);
+      return matchesCategory && matchesSearch;
+    });
+  }, [selectedCategory, searchQuery]);
+
+  const activeScenario = examScenarios.find((s) => s.id === selectedScenarioId) || examScenarios[0];
+  const ActiveServiceIcon = activeScenario.serviceIcon;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
-        <div className="flex items-center space-x-2">
-          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-mono uppercase px-2.5 py-1 rounded-md font-bold">
-            Service Selection Guide
-          </span>
-          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-2.5 py-1 rounded-md">
-            Exam Decision Tree
-          </span>
+      
+      {/* Header Banner */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 space-y-2 max-w-3xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-mono uppercase px-2.5 py-1 rounded-xl font-black">
+              Service Decision Engine
+            </span>
+            <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-bold px-2.5 py-1 rounded-xl">
+              AIF-C01 Architecture Selector
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
+            AWS AI & Machine Learning Service Decision Tree
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            The AWS Certified AI Practitioner exam frequently tests your ability to select the exact right AWS service with the lowest operational overhead and cost. Use this interactive decision tree and scenario solver.
+          </p>
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-white mt-1">
-          AWS AI/ML Service Selection Wizard
-        </h2>
-        <p className="text-sm sm:text-base text-slate-300 max-w-3xl">
-          Select a functional requirement below to instantly see the purpose-built AWS service, keyword clues, and distractor traps to avoid on the AIF-C01 exam.
-        </p>
       </div>
 
-      {/* Interactive Service Grid */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-            <Compass className="w-5 h-5 text-amber-400" />
-            Select Your Functional AI Task:
+      {/* Visual Top-Level Branching Hierarchy Flowchart */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xl space-y-6">
+        
+        <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-800">
+          <GitBranch className="w-5 h-5 text-amber-400" />
+          <h3 className="text-base sm:text-lg font-bold text-white">
+            Primary Architectural Decision Branches
           </h3>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {serviceCategories.map((cat) => {
-            const isSelected = cat.id === selectedCategoryId;
-            const CatIcon = cat.icon;
+        {/* 3 Main Pillars Flowchart Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Branch 1 */}
+          <div className="bg-slate-950 border border-amber-500/40 rounded-2xl p-5 space-y-3 shadow-lg flex flex-col justify-between">
+            <div className="space-y-2">
+              <span className="text-[10px] font-mono uppercase font-black px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Pillar 1: Pre-Built AI Services
+              </span>
+              <h4 className="text-base font-bold text-white">Zero ML Training Required</h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Standard REST APIs ready for immediate consumption. Ideal when standard modalities match the task.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800/80 space-y-1.5 text-xs font-mono">
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Textract:</span>
+                <span className="text-amber-400">PDFs / Tables</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Comprehend:</span>
+                <span className="text-amber-400">NLP & PII</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Transcribe / Polly:</span>
+                <span className="text-amber-400">Audio & Voice</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Rekognition:</span>
+                <span className="text-amber-400">Images & Video</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Branch 2 */}
+          <div className="bg-slate-950 border border-cyan-500/40 rounded-2xl p-5 space-y-3 shadow-lg flex flex-col justify-between">
+            <div className="space-y-2">
+              <span className="text-[10px] font-mono uppercase font-black px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                Pillar 2: Amazon Bedrock
+              </span>
+              <h4 className="text-base font-bold text-white">Serverless GenAI & LLMs</h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Unified serverless API to Claude, Nova, Llama with managed RAG, Guardrails, and Agents.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800/80 space-y-1.5 text-xs font-mono">
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Knowledge Bases:</span>
+                <span className="text-cyan-400">Managed RAG</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Guardrails:</span>
+                <span className="text-cyan-400">5-Layer Safety</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Agents:</span>
+                <span className="text-cyan-400">Autonomous ReAct</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Prompt Router:</span>
+                <span className="text-cyan-400">Cost Optimizer</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Branch 3 */}
+          <div className="bg-slate-950 border border-purple-500/40 rounded-2xl p-5 space-y-3 shadow-lg flex flex-col justify-between">
+            <div className="space-y-2">
+              <span className="text-[10px] font-mono uppercase font-black px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                Pillar 3: Amazon SageMaker
+              </span>
+              <h4 className="text-base font-bold text-white">Full Custom MLOps Lifecycle</h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Complete control over compute infrastructure, training loops, bias audit, and production endpoints.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800/80 space-y-1.5 text-xs font-mono">
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Clarify:</span>
+                <span className="text-purple-400">Bias & SHAP</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Model Cards:</span>
+                <span className="text-purple-400">Governance</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• Model Monitor:</span>
+                <span className="text-purple-400">Drift Detection</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>• JumpStart:</span>
+                <span className="text-purple-400">Open-weight Hub</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Interactive Scenario Solver & Decision Inspector */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xl space-y-6">
+        
+        {/* Search & Filter Bar */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <Compass className="w-5 h-5 text-amber-400" />
+              Exam Scenario Decision Solver
+            </h3>
+            <p className="text-xs text-slate-400 font-mono">
+              Click any common exam problem statement to evaluate the winning service and avoid distractor traps
+            </p>
+          </div>
+
+          <div className="relative w-full md:w-72">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter scenarios or triggers..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400"
+            />
+          </div>
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                selectedCategory === cat
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                  : 'bg-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              {cat === 'all' ? 'All Scenarios' : cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Scenarios Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {filteredScenarios.map((scenario) => {
+            const isSelected = scenario.id === activeScenario.id;
+            const Icon = scenario.serviceIcon;
             return (
               <button
-                key={cat.id}
-                onClick={() => setSelectedCategoryId(cat.id)}
-                className={`p-3.5 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between min-h-[105px] ${
+                key={scenario.id}
+                onClick={() => setSelectedScenarioId(scenario.id)}
+                className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between min-h-[140px] ${
                   isSelected
-                    ? 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20 ring-2 ring-amber-400'
-                    : 'bg-slate-950/80 border-slate-800 text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-gradient-to-b from-slate-900 to-slate-950 border-amber-400 ring-2 ring-amber-400/40 shadow-xl shadow-amber-500/10'
+                    : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <CatIcon className={`w-5 h-5 ${isSelected ? 'text-slate-950' : 'text-amber-400'}`} />
-                  <span className={`text-[10px] font-mono font-bold ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}>
-                    {cat.service.replace('Amazon ', '').replace('AWS ', '')}
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <h4 className={`text-xs sm:text-sm font-bold leading-tight ${isSelected ? 'text-slate-950' : 'text-slate-100'}`}>
-                    {cat.name}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                      {scenario.category}
+                    </span>
+                    <Icon className={`w-4 h-4 ${isSelected ? 'text-amber-400' : 'text-slate-500'}`} />
+                  </div>
+                  <h4 className={`text-xs font-bold leading-snug line-clamp-2 ${
+                    isSelected ? 'text-amber-300' : 'text-slate-200'
+                  }`}>
+                    {scenario.title}
                   </h4>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800/80 mt-2 flex items-center justify-between text-[11px] font-mono">
+                  <span className={isSelected ? 'text-amber-400 font-black' : 'text-slate-400'}>
+                    ➔ {scenario.winningService.split('(')[0].trim()}
+                  </span>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* Selected Service Card */}
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-5">
+        {/* Active Scenario Detailed Breakdown */}
+        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-inner">
+          
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
-            <div className="flex items-center space-x-3.5">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold">
-                <IconComp className="w-6 h-6" />
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center font-bold">
+                <ActiveServiceIcon className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs text-amber-400 font-mono font-bold uppercase tracking-wider">
-                  Recommended AWS Service
+                <span className="text-xs font-mono uppercase text-slate-400 font-bold block">
+                  Prescribed Architectural Winner
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white">
-                  {currentCategory.service}
-                </h3>
+                <h4 className="text-lg sm:text-xl font-black text-white">
+                  {activeScenario.winningService}
+                </h4>
               </div>
             </div>
 
-            {/* Related Questions */}
-            {currentCategory.relatedQuestions.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-slate-400 font-medium">Practice in Bank:</span>
-                {currentCategory.relatedQuestions.map((qId) => (
-                  <button
-                    key={qId}
-                    onClick={() => onSelectQuestion?.(qId)}
-                    className="px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-colors"
-                  >
-                    Q{qId}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <p className="text-sm sm:text-base text-slate-200 leading-relaxed font-normal">
-            {currentCategory.description}
-          </p>
-
-          {/* Trigger Keywords Callout */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
-            <span className="text-xs text-amber-400 font-bold uppercase tracking-wider">
-              Exam Scenario Trigger Keywords:
-            </span>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {currentCategory.triggerKeywords.map((kw, i) => (
-                <span key={i} className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs px-2.5 py-1 rounded-md font-mono font-bold">
-                  "{kw}"
-                </span>
+            {/* Linked Questions */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-slate-400 font-semibold">Test In MCQ:</span>
+              {activeScenario.relatedQuestions.map((qId) => (
+                <button
+                  key={qId}
+                  onClick={() => onSelectQuestion?.(qId)}
+                  className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
+                >
+                  <BookOpen className="w-3 h-3" />
+                  <span>Q#{qId}</span>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Distractor Traps */}
-          <div className="bg-rose-950/25 border border-rose-500/30 rounded-xl p-4 space-y-2">
-            <div className="flex items-center space-x-2 text-rose-300 font-bold text-xs sm:text-sm uppercase tracking-wide">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-              <span>Watch Out For These Exam Distractor Traps:</span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs sm:text-sm">
+            
+            {/* Box 1: Why this service */}
+            <div className="bg-slate-900/90 border border-slate-800 p-4 sm:p-5 rounded-2xl space-y-2">
+              <div className="flex items-center space-x-2 text-emerald-400 font-bold uppercase tracking-wider text-xs">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Why This Service Wins</span>
+              </div>
+              <p className="text-slate-300 leading-relaxed">
+                {activeScenario.reasoning}
+              </p>
             </div>
-            <ul className="text-xs sm:text-sm text-slate-300 space-y-1.5 list-disc list-inside">
-              {currentCategory.commonDistractors.map((dis, i) => (
-                <li key={i}>{dis}</li>
-              ))}
-            </ul>
+
+            {/* Box 2: Exam Distractor Trap */}
+            <div className="bg-slate-900/90 border border-slate-800 p-4 sm:p-5 rounded-2xl space-y-2">
+              <div className="flex items-center space-x-2 text-rose-400 font-bold uppercase tracking-wider text-xs">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Avoid This Distractor Trap</span>
+              </div>
+              <p className="text-slate-300 leading-relaxed">
+                {activeScenario.distractorTrap}
+              </p>
+            </div>
+
+            {/* Box 3: Exam Trigger Clue */}
+            <div className="bg-amber-950/20 border border-amber-500/40 p-4 sm:p-5 rounded-2xl space-y-2">
+              <div className="flex items-center space-x-2 text-amber-300 font-bold uppercase tracking-wider text-xs">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>High-Yield Trigger Keyword</span>
+              </div>
+              <p className="text-amber-100 font-mono leading-relaxed font-bold">
+                {activeScenario.examTrigger}
+              </p>
+            </div>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
   );
 };

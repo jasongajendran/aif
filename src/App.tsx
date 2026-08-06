@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { McqPracticeView } from './components/McqPracticeView';
 import { VisualizationsHub } from './components/visualizations/VisualizationsHub';
 import { ReadyReckonerHub } from './components/reckoner/ReadyReckonerHub';
+import { FloatingNav } from './components/FloatingNav';
 import { ViewMode } from './types';
 
 const STORAGE_KEY_ALWAYS_REVEAL = 'aif_c01_always_reveal_v1';
@@ -129,6 +130,16 @@ export default function App() {
           </p>
         </div>
       </footer>
+
+      {/* Floating Quick Navigator & Scroll to Top */}
+      <FloatingNav
+        currentView={currentView}
+        onViewChange={(v) => {
+          setCurrentView(v);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        totalQuestions={questions.length}
+      />
 
     </div>
   );
