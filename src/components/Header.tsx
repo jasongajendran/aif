@@ -39,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <h1 className="text-base sm:text-lg lg:text-xl font-bold text-white tracking-tight leading-snug">
-                AWS Certified AI Practitioner Practice Exam & Visual Study Hub
+                AWS Certified AI Practitioner Study Hub
               </h1>
             </div>
           </div>

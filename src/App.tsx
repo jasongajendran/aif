@@ -123,7 +123,7 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-slate-950 text-slate-500 text-xs sm:text-sm py-6 px-4 text-center">
         <div className="w-full space-y-2">
           <p className="font-medium text-slate-400">
-            AIF-C01 AWS Certified AI Practitioner Practice MCQs & Visual Study Hub
+            AIF-C01 AWS Certified AI Practitioner Study Hub
           </p>
           <p className="text-xs max-w-3xl mx-auto text-slate-600">
             AWS and Amazon Web Services are trademarks of Amazon.com, Inc. or its affiliates. This application is an independent educational practice resource provided to assist certification candidates.
