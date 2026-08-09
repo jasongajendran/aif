@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { examGoldenRules, ExamRule } from './reckonerData';
 import { 
   Lightbulb, AlertTriangle, ShieldCheck, Zap, Search, 
-  Bookmark, CheckCircle2, Eye, EyeOff, Sparkles, BookOpen
+  CheckCircle2, Eye, EyeOff
 } from 'lucide-react';
 
 interface ExamGoldenRulesProps {

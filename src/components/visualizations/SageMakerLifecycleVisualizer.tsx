@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FileText, Activity, ShieldCheck, Cpu, Layers, Sparkles, 
-  CheckCircle2, ArrowRight, Eye, AlertCircle, BarChart3, BookOpen,
+  CheckCircle2, ArrowRight, ArrowLeft, Eye, AlertCircle, BarChart3, BookOpen,
   Server, RefreshCw, AlertTriangle, Check
 } from 'lucide-react';
 
@@ -84,6 +84,7 @@ export const SageMakerLifecycleVisualizer: React.FC<SageMakerLifecycleVisualizer
   ];
 
   const currentStage = stages.find((s) => s.id === activeStageId) || stages[0];
+  const currentStageIndex = stages.findIndex((s) => s.id === currentStage.id);
 
   return (
     <div className="space-y-6">
@@ -182,9 +183,27 @@ export const SageMakerLifecycleVisualizer: React.FC<SageMakerLifecycleVisualizer
               </div>
             </div>
 
-            {/* Linked Questions */}
+            {/* Prev / Next Stage Buttons & Linked Questions */}
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-400 font-semibold">Test In MCQ:</span>
+              {currentStageIndex > 0 && (
+                <button
+                  onClick={() => setActiveStageId(stages[currentStageIndex - 1].id)}
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Prev Stage</span>
+                </button>
+              )}
+              {currentStageIndex < stages.length - 1 && (
+                <button
+                  onClick={() => setActiveStageId(stages[currentStageIndex + 1].id)}
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
+                >
+                  <span className="hidden sm:inline">Next Stage</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <span className="text-xs text-slate-400 font-semibold ml-1">Test In MCQ:</span>
               {currentStage.relatedQuestions.map((qId) => (
                 <button
                   key={qId}

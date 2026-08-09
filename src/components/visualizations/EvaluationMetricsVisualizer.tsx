@@ -57,30 +57,42 @@ export const EvaluationMetricsVisualizer: React.FC<EvaluationMetricsVisualizerPr
       primaryUse: 'Text Summarization',
       measurement: 'N-gram overlap (unigrams, bigrams, and Longest Common Subsequence) between generated summary and human reference.',
       examRule: 'Use ROUGE for evaluating automated text summarization models.',
+      relatedQuestions: [428, 434],
     },
     {
       name: 'BLEU (Bilingual Evaluation Understudy)',
       primaryUse: 'Machine Translation',
       measurement: 'Modified n-gram precision with brevity penalty comparing candidate translation to one or more reference translations.',
       examRule: 'Use BLEU for evaluating language translation accuracy.',
+      relatedQuestions: [428],
     },
     {
       name: 'BERTScore',
       primaryUse: 'Semantic Text Quality',
       measurement: 'Computes cosine similarity between contextual BERT embeddings of tokens in candidate and reference, capturing semantic meaning rather than exact word matches.',
       examRule: 'Captures synonyms and paraphrasing that lexical n-gram metrics (ROUGE/BLEU) miss.',
+      relatedQuestions: [434],
     },
     {
       name: 'Perplexity',
       primaryUse: 'Model Uncertainty & Fluency',
       measurement: 'Exponentiated cross-entropy loss measuring how surprised a language model is by a sequence of test tokens. Lower is better.',
       examRule: 'Lower perplexity means the model predicts text with higher confidence and natural grammar.',
+      relatedQuestions: [428],
     },
     {
       name: 'Faithfulness & Answer Relevance',
-      primaryUse: 'RAG Systems',
+      primaryUse: 'RAG Systems & Grounding',
       measurement: 'Checks if generated claims are 100% supported by retrieved source context chunks (Faithfulness) and address the user prompt (Relevance).',
       examRule: 'Low faithfulness indicates hallucination in RAG applications.',
+      relatedQuestions: [421, 426, 443],
+    },
+    {
+      name: 'TTFT & Token Throughput (Latency)',
+      primaryUse: 'Inference Performance',
+      measurement: 'Time to First Token (TTFT in ms) measures initial response latency; Tokens/second measures generation speed across concurrent users.',
+      examRule: 'Streaming responses and Bedrock Provisioned Throughput optimize TTFT and sustained throughput.',
+      relatedQuestions: [425, 435],
     },
   ];
 
@@ -360,9 +372,26 @@ export const EvaluationMetricsVisualizer: React.FC<EvaluationMetricsVisualizerPr
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-800 text-xs text-amber-300/90 font-medium">
-                <strong className="text-amber-400">Exam Trigger: </strong>
-                {gm.examRule}
+              <div className="pt-3 border-t border-slate-800 space-y-2">
+                <div className="text-xs text-amber-300/90 font-medium">
+                  <strong className="text-amber-400">Exam Trigger: </strong>
+                  {gm.examRule}
+                </div>
+                {gm.relatedQuestions && gm.relatedQuestions.length > 0 && (
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <span className="text-[10px] text-slate-400 font-mono">Practice:</span>
+                    {gm.relatedQuestions.map((qId) => (
+                      <button
+                        key={qId}
+                        onClick={() => onSelectQuestion?.(qId)}
+                        className="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-[10px] font-mono font-bold border border-amber-500/30 transition-all flex items-center space-x-1"
+                      >
+                        <BookOpen className="w-2.5 h-2.5" />
+                        <span>Q#{qId}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}

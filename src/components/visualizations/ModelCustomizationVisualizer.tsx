@@ -10,8 +10,8 @@ interface ModelCustomizationVisualizerProps {
 }
 
 export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizerProps> = ({ onSelectQuestion }) => {
-  const [selectedTierId, setSelectedTierId] = useState<string>('rag');
-  const [matchedRequirement, setMatchedRequirement] = useState<string>('rag');
+  const [selectedTierId, setSelectedTierId] = useState<string>('prompt-eng');
+  const [matchedRequirement, setMatchedRequirement] = useState<string>('prompt-eng');
 
   const tiers = [
     {
@@ -31,7 +31,7 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       mechanism: 'Crafting targeted instructions, system messages, and few-shot input/output examples directly in the inference request context window.',
       examRule: 'Always evaluate Prompt Engineering first before considering heavier customization options (lowest effort & cost).',
       exampleCode: `// Prompt Engineering Request\nconst response = await bedrock.invokeModel({\n  modelId: "anthropic.claude-3-haiku",\n  prompt: "You are a customer support agent. Summarize this complaint in 2 bullet points:\\n..."\n});`,
-      relatedQuestions: [428],
+      relatedQuestions: [8, 37, 78, 122, 428],
     },
     {
       id: 'rag',
@@ -50,7 +50,7 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       mechanism: 'Extracting semantic chunks from Amazon S3, storing vector embeddings in OpenSearch Serverless, and dynamically retrieving Top-K context chunks into the prompt.',
       examRule: 'Choose RAG when the model needs current/private data, factual grounding, or citations without modifying weights.',
       exampleCode: `// Bedrock Knowledge Base RAG Request\nconst result = await bedrockAgentRuntime.retrieveAndGenerate({\n  input: { text: "What is our 2026 expense policy?" },\n  retrieveAndGenerateConfiguration: {\n    type: "KNOWLEDGE_BASE",\n    knowledgeBaseConfiguration: { knowledgeBaseId: "KB-94812" }\n  }\n});`,
-      relatedQuestions: [421, 423, 426, 427, 443],
+      relatedQuestions: [1, 10, 45, 421, 423, 426, 427, 443],
     },
     {
       id: 'fine-tuning',
@@ -69,7 +69,7 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       mechanism: 'Supervised fine-tuning (SFT) adjusts the model parameters using high-quality curated prompt-response pairs. Supported natively in Amazon Bedrock Custom Models and SageMaker.',
       examRule: 'Choose Fine-Tuning when you need to change HOW the model responds (tone, style, output schema, specialized task pattern).',
       exampleCode: `// Training Data Format (train.jsonl)\n{"prompt": "Classify claim #892: Patient broke leg skiing", "completion": "CATEGORY: ORTHO_ACCIDENT | SEVERITY: HIGH"}\n{"prompt": "Classify claim #893: Annual dental checkup", "completion": "CATEGORY: DENTAL_ROUTINE | SEVERITY: LOW"}`,
-      relatedQuestions: [428, 438],
+      relatedQuestions: [5, 49, 110, 428, 438],
     },
     {
       id: 'continued-pretraining',
@@ -88,7 +88,7 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       mechanism: 'Continues the self-supervised pre-training objective on vast unlabeled domain text corpora so the base model internalizes domain knowledge without training from scratch.',
       examRule: 'Choose Continued Pre-Training when a model lacks understanding of specialized domain vocabulary or industry literature (e.g., Q438).',
       exampleCode: `// Raw Unlabeled Domain Text Ingestion\n"Section 14(a)(1) under SEC Rule 14a-8 requires registrant to include shareholder proposal unless excludable under subsection (i)(7)..."`,
-      relatedQuestions: [438],
+      relatedQuestions: [50, 112, 438],
     },
     {
       id: 'pretraining-scratch',
@@ -107,12 +107,17 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       mechanism: 'Training an entire foundation model from random weight initialization. Requires massive compute clusters (AWS Trainium, EC2 P5/Trn1 instances), multi-million dollar budgets, and months of engineering.',
       examRule: 'Almost NEVER the right choice in AIF-C01 exam scenarios due to extreme cost, compute, and time constraints.',
       exampleCode: `// Random Weight Initialization\nmodel = TransformerModel(vocab_size=64000, hidden_dim=8192, layers=64)\n// Distributed training on 2,048 AWS Trainium accelerators across 90 days...`,
-      relatedQuestions: [428, 439],
+      relatedQuestions: [51, 428, 439],
     },
   ];
 
-  const currentTier = tiers.find((t) => t.id === selectedTierId) || tiers[1];
+  const currentTier = tiers.find((t) => t.id === selectedTierId) || tiers[0];
   const currentTierIndex = tiers.findIndex((t) => t.id === currentTier.id);
+
+  const handleSelectTier = (tierId: string) => {
+    setSelectedTierId(tierId);
+    setMatchedRequirement(tierId);
+  };
 
   const requirements = [
     {
@@ -222,7 +227,7 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
             return (
               <button
                 key={t.id}
-                onClick={() => setSelectedTierId(t.id)}
+                onClick={() => handleSelectTier(t.id)}
                 className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between min-h-[155px] ${
                   isSelected
                     ? 'bg-gradient-to-b from-slate-900 to-slate-950 border-amber-400 ring-2 ring-amber-400/40 shadow-xl shadow-amber-500/10 transform -translate-y-1'
@@ -285,7 +290,7 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
             <div className="flex items-center space-x-2">
               {currentTierIndex > 0 && (
                 <button
-                  onClick={() => setSelectedTierId(tiers[currentTierIndex - 1].id)}
+                  onClick={() => handleSelectTier(tiers[currentTierIndex - 1].id)}
                   className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -294,7 +299,7 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
               )}
               {currentTierIndex < tiers.length - 1 && (
                 <button
-                  onClick={() => setSelectedTierId(tiers[currentTierIndex + 1].id)}
+                  onClick={() => handleSelectTier(tiers[currentTierIndex + 1].id)}
                   className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
                 >
                   <span className="hidden sm:inline">Next Tier</span>

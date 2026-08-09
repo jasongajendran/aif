@@ -121,10 +121,10 @@ export const VisualizationsHub: React.FC<VisualizationsHubProps> = ({
     {
       id: 'exam-domain-analytics',
       number: 7,
-      title: '446 Question Domain Distribution & Analytics',
-      shortTitle: '446 Qs Analytics',
+      title: `${questions.length} Question Domain Distribution & Analytics`,
+      shortTitle: `${questions.length} Qs Analytics`,
       subtitle: 'Domain Breakdown, Topic Density & Question Heatmap',
-      description: 'Comprehensive breakdown of all 446 practice questions across the 5 official AWS AIF-C01 domains and exam topics.',
+      description: `Comprehensive breakdown of all ${questions.length} practice questions across the 5 official AWS AIF-C01 domains and exam topics.`,
       domain: 'All 5 Domains',
       icon: PieChart,
       badge: 'Question Analytics',

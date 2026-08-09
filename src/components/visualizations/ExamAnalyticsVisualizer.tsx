@@ -65,14 +65,14 @@ export const ExamAnalyticsVisualizer: React.FC<ExamAnalyticsVisualizerProps> = (
             Question Bank Analytics
           </span>
           <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-2.5 py-1 rounded-md">
-            446 Total Questions Analyzed
+            {questions.length} Total Questions Analyzed
           </span>
         </div>
         <h2 className="text-xl sm:text-2xl font-bold text-white mt-1">
           AIF-C01 Question Bank Visual Breakdown
         </h2>
         <p className="text-sm sm:text-base text-slate-300 max-w-3xl">
-          Visual analysis of the entire 446 practice question library across official exam domains, parts, and key topic clusters.
+          Visual analysis of the entire {questions.length} practice question library across official exam domains, parts, and key topic clusters.
         </p>
       </div>
 

@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { 
   Compass, Search, ArrowRight, CheckCircle2, AlertTriangle, 
   Sparkles, BookOpen, Layers, GitBranch, Cpu, FileText, 
-  Mic, Eye, MessageSquare, Shield, HelpCircle, Server, Code, Volume2
+  Mic, Eye, MessageSquare, Shield, HelpCircle, Server, Code, Volume2,
+  UserCheck, Users
 } from 'lucide-react';
 
 interface ServiceDecisionTreeVisualizerProps {
@@ -64,6 +65,18 @@ export const ServiceDecisionTreeVisualizer: React.FC<ServiceDecisionTreeVisualiz
       relatedQuestions: [437],
     },
     {
+      id: 'computer-vision-moderation',
+      title: 'Detect inappropriate user uploads, facial attributes, and objects in images',
+      category: 'Computer Vision',
+      winningService: 'Amazon Rekognition',
+      serviceIcon: Eye,
+      serviceColor: 'text-indigo-400 border-indigo-500/40 bg-indigo-950/20',
+      reasoning: 'Amazon Rekognition offers pre-trained computer vision APIs for automated content moderation, facial analysis, text-in-image extraction, and custom labels without deep learning model training.',
+      distractorTrap: 'Amazon Textract is specialized for text/tables in documents/PDFs, not general computer vision, moderation, or face recognition.',
+      examTrigger: 'Image moderation, face comparison, object/label detection in photos ➔ Amazon Rekognition',
+      relatedQuestions: [433, 441],
+    },
+    {
       id: 'rag-knowledge',
       title: 'Answer user queries from enterprise PDFs with source citations',
       category: 'GenAI & LLMs',
@@ -100,6 +113,18 @@ export const ServiceDecisionTreeVisualizer: React.FC<ServiceDecisionTreeVisualiz
       relatedQuestions: [440, 444],
     },
     {
+      id: 'human-in-the-loop-review',
+      title: 'Route low-confidence ML predictions to human reviewers for validation',
+      category: 'Governance & HITL',
+      winningService: 'Amazon Augmented AI (Amazon A2I)',
+      serviceIcon: UserCheck,
+      serviceColor: 'text-teal-400 border-teal-500/40 bg-teal-950/20',
+      reasoning: 'Amazon Augmented AI (A2I) provides built-in human review workflows for machine learning models (Textract, Rekognition, or custom SageMaker models) whenever prediction confidence falls below a configured threshold.',
+      distractorTrap: 'SageMaker Ground Truth is for building and labeling initial training datasets, whereas Amazon A2I is for human review of runtime production model predictions.',
+      examTrigger: 'Human-in-the-loop (HITL) review for low confidence predictions ➔ Amazon Augmented AI (A2I)',
+      relatedQuestions: [424, 440],
+    },
+    {
       id: 'endpoint-drift',
       title: 'Continuously detect feature attribution drift and data drift in production',
       category: 'MLOps & Monitoring',
@@ -113,7 +138,7 @@ export const ServiceDecisionTreeVisualizer: React.FC<ServiceDecisionTreeVisualiz
     },
   ];
 
-  const categories = ['all', 'Document & OCR', 'NLP & Language', 'Speech & Audio', 'GenAI & LLMs', 'Developer Tools', 'Governance', 'MLOps & Monitoring'];
+  const categories = ['all', 'Document & OCR', 'NLP & Language', 'Speech & Audio', 'Computer Vision', 'GenAI & LLMs', 'Developer Tools', 'Governance', 'Governance & HITL', 'MLOps & Monitoring'];
 
   const filteredScenarios = useMemo(() => {
     return examScenarios.filter((s) => {
