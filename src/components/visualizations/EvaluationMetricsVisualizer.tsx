@@ -4,9 +4,10 @@ import {
   HelpCircle, Sliders, ArrowRight, BookOpen, Layers, 
   BarChart3, Activity, PieChart
 } from 'lucide-react';
+import { NavigationOrigin } from '../../types';
 
 interface EvaluationMetricsVisualizerProps {
-  onSelectQuestion?: (questionId: number) => void;
+  onSelectQuestion?: (questionId: number, origin?: NavigationOrigin) => void;
 }
 
 export const EvaluationMetricsVisualizer: React.FC<EvaluationMetricsVisualizerProps> = ({ onSelectQuestion }) => {
@@ -378,12 +379,17 @@ export const EvaluationMetricsVisualizer: React.FC<EvaluationMetricsVisualizerPr
                   {gm.examRule}
                 </div>
                 {gm.relatedQuestions && gm.relatedQuestions.length > 0 && (
-                  <div className="flex items-center gap-1.5 pt-1">
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
                     <span className="text-[10px] text-slate-400 font-mono">Practice:</span>
                     {gm.relatedQuestions.map((qId) => (
                       <button
                         key={qId}
-                        onClick={() => onSelectQuestion?.(qId)}
+                        onClick={() => onSelectQuestion?.(qId, {
+                          view: 'visualizations',
+                          tabId: 'confusion-matrix',
+                          sectionTitle: `Evaluation Metrics: ${gm.name}`,
+                          subItemId: gm.name,
+                        })}
                         className="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-[10px] font-mono font-bold border border-amber-500/30 transition-all flex items-center space-x-1"
                       >
                         <BookOpen className="w-2.5 h-2.5" />

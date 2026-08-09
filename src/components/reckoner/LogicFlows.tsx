@@ -4,9 +4,10 @@ import {
   GitFork, ArrowRight, ArrowLeft, RotateCcw, CheckCircle2, 
   Compass, ChevronRight as BreadcrumbSeparator
 } from 'lucide-react';
+import { NavigationOrigin } from '../../types';
 
 interface LogicFlowsProps {
-  onSelectQuestion?: (questionId: number) => void;
+  onSelectQuestion?: (questionId: number, origin?: NavigationOrigin) => void;
 }
 
 export const LogicFlows: React.FC<LogicFlowsProps> = ({ onSelectQuestion }) => {
@@ -225,18 +226,23 @@ export const LogicFlows: React.FC<LogicFlowsProps> = ({ onSelectQuestion }) => {
                         <strong>Exam Clue:</strong> {option.recommendation.examTip}
                       </div>
                       {option.recommendation.targetQuestionIds && option.recommendation.targetQuestionIds.length > 0 && onSelectQuestion && (
-                        <div className="flex items-center space-x-1.5 pt-1">
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
                           <span className="text-[10px] text-slate-400">Related MCQs:</span>
                           {option.recommendation.targetQuestionIds.map((qId: number) => (
                             <button
                               key={qId}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onSelectQuestion(qId);
+                                onSelectQuestion(qId, {
+                                  view: 'ready-reckoner',
+                                  tabId: 'logic-flows',
+                                  sectionTitle: `Decision Logic Flow: ${activeFlow.title}`,
+                                  subItemId: selectedFlowId,
+                                });
                               }}
-                              className="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-400 hover:text-slate-950 text-amber-300 text-[10px] font-mono font-bold transition-all"
+                              className="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-400 hover:text-slate-950 text-amber-300 text-[10px] font-mono font-bold transition-all flex items-center space-x-1 border border-amber-500/30"
                             >
-                              Q#{qId}
+                              <span>Q#{qId}</span>
                             </button>
                           ))}
                         </div>

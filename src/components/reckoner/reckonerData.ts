@@ -78,26 +78,26 @@ export interface DomainOverview {
 export const comparisonTables: ComparisonTable[] = [
   {
     id: 'bedrock-vs-sagemaker-vs-prebuilt',
-    title: 'Bedrock vs. SageMaker vs. Pre-built AWS AI Services',
+    title: 'Amazon Bedrock vs. Amazon SageMaker vs. Pre-built AWS AI Services',
     category: 'core-services',
     badge: 'Exam Core (Domain 3)',
     description: 'The foundational architectural decision tested extensively across AIF-C01.',
-    columns: ['Dimension', 'Pre-built AI Services (Comprehend, Rekognition, etc.)', 'Amazon Bedrock', 'Amazon SageMaker'],
+    columns: ['Dimension', 'Pre-built AI Services (Amazon Comprehend, Amazon Rekognition, etc.)', 'Amazon Bedrock', 'Amazon SageMaker'],
     rows: [
       {
         feature: 'Primary Use Case',
         values: [
-          'Turnkey AI without training (OCR, vision, sentiment, transcription)',
-          'Serverless Foundation Models via unified API (Claude, Titan, Llama)',
-          'End-to-end custom ML lifecycle (custom models, full infra control)'
+          'Turnkey AI without model training (Optical Character Recognition [OCR], Computer Vision, sentiment analysis, speech transcription)',
+          'Serverless Foundation Models (FMs) via unified Application Programming Interface (API) (Claude, Titan, Llama, Nova)',
+          'End-to-end custom Machine Learning (ML) lifecycle (custom neural networks, full infrastructure container control)'
         ],
         highlight: true,
-        examTip: 'Pre-built = Zero model management; Bedrock = API for LLMs/RAG; SageMaker = Full ML container & training control.'
+        examTip: 'Pre-built = Zero model management; Bedrock = Serverless API for Foundation Models (FMs) and Retrieval-Augmented Generation (RAG); SageMaker = Full ML container & training control.'
       },
       {
-        feature: 'Machine Learning Expertise Needed',
-        values: ['Zero ML skills required (standard REST API calls)', 'Low / Prompt Eng & API skills (No infra management)', 'High ML / Data Science skills (Hyperparameters, containers, compute)'],
-        examTip: 'Exam trap: Choosing SageMaker for standard sentiment or text extraction when pre-built Comprehend or Bedrock requires zero ML expertise.'
+        feature: 'Machine Learning (ML) Expertise Needed',
+        values: ['Zero ML skills required (standard REST API calls)', 'Low / Prompt Engineering & API integration skills (No server or compute management)', 'High ML / Data Science skills (Hyperparameters, Docker containers, GPU compute sizing)'],
+        examTip: 'Exam trap: Choosing SageMaker for standard sentiment analysis or text extraction when pre-built Comprehend or Bedrock requires zero ML expertise.'
       },
       {
         feature: 'Infrastructure Management',
@@ -106,17 +106,17 @@ export const comparisonTables: ComparisonTable[] = [
       },
       {
         feature: 'Customization Depth',
-        values: ['Custom labels / Custom classification / Custom vocab', 'Prompt Eng, RAG, Fine-Tuning, Continued Pre-training', 'Any framework (PyTorch, TensorFlow, XGBoost, Scikit-learn)'],
+        values: ['Custom labels / Custom classification / Custom vocabulary', 'Prompt Engineering, Retrieval-Augmented Generation (RAG), Fine-Tuning, Continued Pre-training', 'Any framework (PyTorch, TensorFlow, XGBoost, Scikit-learn)'],
         examTip: 'Custom Labels = Pre-built AI; Fine-Tuning & RAG = Bedrock; Custom Python training scripts & algorithms = SageMaker.'
       },
       {
         feature: 'Pricing Model',
-        values: ['Pay-per-unit (per page, per minute, per image, per character)', 'Pay-per-token (On-Demand) or Provisioned Throughput (model units/hour)', 'Pay for EC2/GPU instance uptime + storage + data transfer'],
+        values: ['Pay-per-unit (per document page, per audio minute, per image, per text character)', 'Pay-per-token (On-Demand) or Provisioned Throughput (model units/hour)', 'Pay for EC2/GPU instance uptime + storage + data transfer'],
         examTip: 'Bedrock uses on-demand token pricing or Provisioned Throughput. SageMaker charges for running instance hours even when idle.'
       },
       {
         feature: 'Model Governance Tool',
-        values: ['AWS AI Service Cards (AWS-authored transparency)', 'Bedrock Guardrails & Model Evaluation', 'SageMaker Model Cards, Model Monitor, Clarify, Model Registry'],
+        values: ['AWS AI Service Cards (AWS-authored transparency fact sheets)', 'Amazon Bedrock Guardrails & Automated Model Evaluation', 'Amazon SageMaker Model Cards, Model Monitor, Clarify, Model Registry'],
         examTip: 'Trap: AI Service Cards are ONLY for pre-built AWS AI services. Model Cards are for user-managed custom models!'
       }
     ],
@@ -124,37 +124,37 @@ export const comparisonTables: ComparisonTable[] = [
   },
   {
     id: 'model-customization-spectrum',
-    title: 'Model Customization Spectrum (Cost vs. Effort vs. Accuracy)',
+    title: 'Foundation Model (FM) Customization Spectrum (Cost vs. Effort vs. Accuracy)',
     category: 'genai-techniques',
     badge: 'High Frequency (Domain 2 & 3)',
-    description: 'Directly maps to 15+ exam questions asking how to inject proprietary data or adjust tone.',
-    columns: ['Customization Method', 'Changes Model Weights?', 'Data Volume Required', 'Cost & Latency', 'Best For', 'Exam Clues / Triggers'],
+    description: 'Directly maps to 15+ exam questions asking how to inject proprietary data or adjust model behavior and weights.',
+    columns: ['Customization Method', 'Changes Model Weights (Internal Numbers)?', 'Data Volume Required', 'Cost & Latency', 'Best For', 'Exam Clues / Triggers'],
     rows: [
       {
-        feature: 'Prompt Engineering (Zero-Shot / Few-Shot / CoT)',
-        values: ['NO', 'None (0 to a few exemplars)', 'Lowest cost, standard latency', 'Formatting, standard tasks, tone guidance', 'Zero training data, rapid iteration, no coding'],
+        feature: 'Prompt Engineering (Zero-Shot / Few-Shot / Chain-of-Thought [CoT])',
+        values: ['NO (Weights stay frozen)', 'None (0 to a few exemplars in prompt)', 'Lowest cost, standard latency', 'Formatting, standard tasks, tone guidance', 'Zero training data, rapid iteration, no coding'],
         examTip: 'Cheapest & fastest iteration. Zero weight changes. Best when general knowledge suffices with clear instructions.'
       },
       {
         feature: 'Retrieval-Augmented Generation (RAG / Knowledge Bases)',
-        values: ['NO', 'Enterprise docs in Vector DB (S3 + OpenSearch / Aurora)', 'Low-Medium cost (DB storage + retrieval latency)', 'Real-time facts, proprietary docs, preventing hallucinations', 'Dynamic knowledge, access control, citations/source attribution'],
+        values: ['NO (Weights stay frozen; facts injected into context window)', 'Enterprise docs in Vector Database (Amazon S3 + OpenSearch / Aurora)', 'Low-Medium cost (DB storage + retrieval latency)', 'Real-time facts, proprietary docs, preventing hallucinations', 'Dynamic knowledge, access control (ACLs), citations/source attribution'],
         highlight: true,
         examTip: 'RAG is the #1 answer when company documents update frequently or citations and access control (ACLs) are required!'
       },
       {
-        feature: 'Fine-Tuning (Instruction Tuning / Domain Adaptation)',
-        values: ['YES (Updates weights / adapter layers)', 'Hundreds to thousands of labeled Prompt-Response pairs', 'Medium-High cost (training job + provisioned throughput)', 'Specialized style, niche vocabulary, domain-specific format', 'Consistent output formatting, labeled task dataset, jargon'],
+        feature: 'Fine-Tuning (Instruction Tuning / Domain Adaptation / PEFT & LoRA)',
+        values: ['YES (Updates weights or low-rank adapter layers)', 'Hundreds to thousands of labeled Prompt-Response pairs (JSON Lines [JSONL])', 'Medium-High cost (training job + provisioned throughput)', 'Specialized style, niche vocabulary, domain-specific format', 'Consistent output formatting, labeled task dataset, jargon'],
         highlight: true,
         examTip: 'Updates model weights using labeled prompt-completion pairs (JSONL). Choose when tone, style, or specific output syntax must be enforced.'
       },
       {
         feature: 'Continued Pre-training (Domain Adaptation on Raw Text)',
-        values: ['YES (Updates base model weights)', 'Gigabytes/Billions of tokens of UNLABELED raw domain text', 'High compute cost + Provisioned Throughput needed', 'Teaching base model an entirely new vocabulary (e.g. Legal, Medical, Finance)', 'Raw unlabeled domain corpora, unique syntax, new jargon'],
+        values: ['YES (Updates base foundation model weights)', 'Gigabytes/Billions of tokens of UNLABELED raw domain text', 'High compute cost + Provisioned Throughput needed', 'Teaching base model an entirely new vocabulary (e.g. Legal, Medical, Finance)', 'Raw unlabeled domain corpora, unique syntax, new jargon'],
         examTip: 'Exposes base model to gigabytes of raw UNLABELED domain text (legal/medical) to teach new vocabulary prior to fine-tuning.'
       },
       {
         feature: 'Pre-training from Scratch',
-        values: ['YES (Initializes random weights)', 'Trillions of tokens, massive clusters (Trainium/GPU)', 'Extremely Expensive ($ Millions) + Months of time', 'Creating a proprietary foundational base model', 'Very rarely the right answer unless building a sovereign LLM'],
+        values: ['YES (Initializes brand-new random weights)', 'Trillions of tokens, massive compute clusters (AWS Trainium / Nvidia GPUs)', 'Extremely Expensive ($ Millions) + Months of time', 'Creating a proprietary foundational base model', 'Very rarely the right answer unless building a sovereign LLM'],
         examTip: 'Exam trap: Almost NEVER the right answer due to multimillion-dollar costs and months of compute on Trainium/GPU clusters.'
       }
     ],
@@ -170,42 +170,42 @@ export const comparisonTables: ComparisonTable[] = [
     rows: [
       {
         feature: 'Amazon Textract',
-        values: ['OCR & Document Intelligence', 'Extracts tables, forms, key-value pairs, queries, handwritten text', 'Invoices, receipts, PDF forms, tables, W-2 forms, OCR', 'Does NOT analyze sentiment or natural language context'],
+        values: ['Optical Character Recognition (OCR) & Document Intelligence', 'Extracts tables, forms, key-value pairs, queries, handwritten text from PDFs & images', 'Invoices, receipts, PDF forms, tables, W-2 forms, OCR', 'Does NOT analyze sentiment or natural language context (use Amazon Comprehend)'],
         examTip: 'Keyword triggers: Tables, forms, invoices, receipts, W-2s, AnalyzeDocument API. Trap: Textract does NOT do sentiment analysis.'
       },
       {
         feature: 'Amazon Comprehend',
-        values: ['Natural Language Processing (NLP)', 'Entity recognition, sentiment analysis, PII detection/redaction, topic modeling', 'PII redaction, customer reviews sentiment, multi-language NLP', 'Does NOT extract structured layout/tables from PDFs (use Textract)'],
+        values: ['Natural Language Processing (NLP)', 'Entity recognition, sentiment analysis, Personally Identifiable Information (PII) detection/redaction, topic modeling', 'PII redaction, customer reviews sentiment, multi-language NLP', 'Does NOT extract structured layout/tables from PDFs (use Amazon Textract)'],
         examTip: 'Keyword triggers: Detect PII, customer review sentiment, syntax, entity recognition. Trap: Comprehend does NOT extract layout from PDFs.'
       },
       {
         feature: 'Amazon Rekognition',
-        values: ['Computer Vision (Images & Video)', 'Facial analysis, object/scene detection, PPE detection, content moderation (unsafe imagery)', 'Helmet/PPE safety compliance, inappropriate image moderation, celebrity detection', 'Does NOT generate new images (use Titan Image Generator on Bedrock)'],
+        values: ['Computer Vision (Images & Video)', 'Facial analysis, object/scene detection, Personal Protective Equipment (PPE) detection, content moderation (unsafe imagery)', 'Helmet/PPE safety compliance, inappropriate image moderation, celebrity detection', 'Does NOT generate new images (use Amazon Titan Image Generator on Bedrock)'],
         examTip: 'Keyword triggers: PPE detection (helmets), facial analysis, content moderation. Trap: Rekognition detects images; it does NOT generate images (Titan does).'
       },
       {
         feature: 'Amazon Transcribe',
-        values: ['Speech-to-Text (Audio to Text)', 'Call analytics, custom vocabulary, PII redaction from audio, speaker diarization', 'Audio recordings, meeting transcripts, contact center calls', 'Does NOT convert text into spoken audio (use Polly)'],
+        values: ['Speech-to-Text (Audio to Written Text)', 'Call analytics, custom vocabulary, PII redaction from audio, speaker diarization (who spoke when)', 'Audio recordings, meeting transcripts, contact center calls', 'Does NOT convert text into spoken audio (use Amazon Polly)'],
         examTip: 'Keyword triggers: Audio speech-to-text, call center analytics, speaker diarization, custom vocabulary.'
       },
       {
         feature: 'Amazon Polly',
-        values: ['Text-to-Speech (Text to Audio)', 'Neural & Standard voices, SSML tags, custom pronunciation lexicons, speech marks', 'Voiceover, talking avatars, reading articles aloud', 'Does NOT transcribe audio to text (use Transcribe)'],
+        values: ['Text-to-Speech (Written Text to Audio)', 'Neural & Standard voices, Speech Synthesis Markup Language (SSML) tags, custom pronunciation lexicons, speech marks', 'Voiceover, talking avatars, reading articles aloud', 'Does NOT transcribe audio to text (use Amazon Transcribe)'],
         examTip: 'Keyword triggers: Text-to-speech, SSML tags, Neural voice, custom lexicons. Trap: Transcribe = Audio->Text, Polly = Text->Audio.'
       },
       {
         feature: 'Amazon Lex',
-        values: ['Conversational AI (Chatbots / Voicebots)', 'Intents, utterances, slots, fulfillment via Lambda, connects to Amazon Connect', 'IVR, customer service bot, voice assistants, slot filling', 'Does NOT handle unstructured document Q&A out of the box (use Amazon Q / RAG)'],
+        values: ['Conversational AI (Chatbots & Voicebots)', 'Intents (user goals), utterances (phrases), slots (parameters), fulfillment via AWS Lambda, connects to Amazon Connect Interactive Voice Response (IVR)', 'IVR, customer service bot, voice assistants, slot filling', 'Does NOT handle unstructured document Q&A out of the box (use Amazon Q Business or Bedrock RAG)'],
         examTip: 'Keyword triggers: Chatbot, voicebot, intents, utterances, slots, Lambda fulfillment, Amazon Connect IVR.'
       },
       {
         feature: 'Amazon Kendra',
-        values: ['Intelligent Enterprise Search Engine', 'Natural language search, semantic connectors to SharePoint/Confluence/S3', 'Enterprise search box, indexing internal documents, answering direct FAQ', 'Is a search engine, not a generative creative writing LLM'],
+        values: ['Intelligent Enterprise Search Engine', 'Natural language search, semantic connectors to Microsoft SharePoint/Confluence/Amazon S3', 'Enterprise search box, indexing internal documents, answering direct FAQ', 'Is a search engine, not a generative creative writing Foundation Model (FM)'],
         examTip: 'Keyword triggers: Enterprise search engine, natural language semantic search across SharePoint, Confluence, S3.'
       },
       {
         feature: 'Amazon Q Business',
-        values: ['Generative AI Assistant for Work', 'Connects to 40+ enterprise data sources, enforces user permissions (ACLs), writes summaries', 'Workplace chatbot, executive briefings, strict user access control', 'Not for training custom neural network weights'],
+        values: ['Generative AI Assistant for Work', 'Connects to 40+ enterprise data sources, enforces user permissions and Access Control Lists (ACLs), writes summaries', 'Workplace chatbot, executive briefings, strict user access control', 'Not for training custom neural network weights'],
         examTip: 'Keyword triggers: Turnkey workplace generative AI assistant respecting source ACL permissions across 40+ enterprise data sources.'
       }
     ],

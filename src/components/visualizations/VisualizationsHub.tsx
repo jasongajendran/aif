@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Question, VisualizationTab } from '../../types';
+import { Question, VisualizationTab, NavigationOrigin } from '../../types';
 import { RagArchitectureVisualizer } from './RagArchitectureVisualizer';
 import { ModelCustomizationVisualizer } from './ModelCustomizationVisualizer';
 import { BedrockArchitectureVisualizer } from './BedrockArchitectureVisualizer';
@@ -15,8 +15,9 @@ import {
 
 interface VisualizationsHubProps {
   questions: Question[];
-  onSelectQuestion: (questionId: number) => void;
+  onSelectQuestion: (questionId: number, origin?: NavigationOrigin) => void;
   defaultTab?: VisualizationTab;
+  initialSubItemId?: string;
   onOpenReadyReckoner?: () => void;
   onOpenPractice?: () => void;
 }
@@ -25,6 +26,7 @@ export const VisualizationsHub: React.FC<VisualizationsHubProps> = ({
   questions,
   onSelectQuestion,
   defaultTab = 'rag-architecture',
+  initialSubItemId,
   onOpenReadyReckoner,
   onOpenPractice,
 }) => {
@@ -33,6 +35,12 @@ export const VisualizationsHub: React.FC<VisualizationsHubProps> = ({
   const [catalogSearch, setCatalogSearch] = useState<string>('');
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const contentTopRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab]);
 
   const visualizers: {
     id: VisualizationTab;
@@ -382,16 +390,25 @@ export const VisualizationsHub: React.FC<VisualizationsHubProps> = ({
           <RagArchitectureVisualizer onSelectQuestion={onSelectQuestion} />
         )}
         {activeTab === 'model-customization' && (
-          <ModelCustomizationVisualizer onSelectQuestion={onSelectQuestion} />
+          <ModelCustomizationVisualizer 
+            onSelectQuestion={onSelectQuestion} 
+            initialTierId={initialSubItemId ? Number(initialSubItemId) : undefined}
+          />
         )}
         {activeTab === 'bedrock-guardrails' && (
           <BedrockArchitectureVisualizer onSelectQuestion={onSelectQuestion} />
         )}
         {activeTab === 'sagemaker-lifecycle' && (
-          <SageMakerLifecycleVisualizer onSelectQuestion={onSelectQuestion} />
+          <SageMakerLifecycleVisualizer 
+            onSelectQuestion={onSelectQuestion} 
+            initialStageId={initialSubItemId}
+          />
         )}
         {activeTab === 'service-decision-tree' && (
-          <ServiceDecisionTreeVisualizer onSelectQuestion={onSelectQuestion} />
+          <ServiceDecisionTreeVisualizer 
+            onSelectQuestion={onSelectQuestion} 
+            initialScenarioId={initialSubItemId}
+          />
         )}
         {activeTab === 'confusion-matrix' && (
           <EvaluationMetricsVisualizer onSelectQuestion={onSelectQuestion} />

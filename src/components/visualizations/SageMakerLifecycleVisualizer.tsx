@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileText, Activity, ShieldCheck, Cpu, Layers, Sparkles, 
   CheckCircle2, ArrowRight, ArrowLeft, Eye, AlertCircle, BarChart3, BookOpen,
   Server, RefreshCw, AlertTriangle, Check
 } from 'lucide-react';
+import { NavigationOrigin } from '../../types';
 
 interface SageMakerLifecycleVisualizerProps {
-  onSelectQuestion?: (questionId: number) => void;
+  onSelectQuestion?: (questionId: number, origin?: NavigationOrigin) => void;
+  initialStageId?: string;
 }
 
-export const SageMakerLifecycleVisualizer: React.FC<SageMakerLifecycleVisualizerProps> = ({ onSelectQuestion }) => {
-  const [activeStageId, setActiveStageId] = useState<string>('clarify-bias');
+export const SageMakerLifecycleVisualizer: React.FC<SageMakerLifecycleVisualizerProps> = ({ 
+  onSelectQuestion,
+  initialStageId,
+}) => {
+  const [activeStageId, setActiveStageId] = useState<string>(initialStageId || 'clarify-bias');
+  
+  useEffect(() => {
+    if (initialStageId) {
+      setActiveStageId(initialStageId);
+    }
+  }, [initialStageId]);
   
   // Drift Simulator State
   const [driftType, setDriftType] = useState<'none' | 'data-drift' | 'concept-drift' | 'bias-drift'>('none');
@@ -24,61 +35,61 @@ export const SageMakerLifecycleVisualizer: React.FC<SageMakerLifecycleVisualizer
       category: 'Data Preparation & Fairness',
       service: 'Amazon SageMaker Clarify',
       badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
-      description: 'Analyzes raw tabular training datasets to detect demographic imbalances and statistical bias before a machine learning model is trained (e.g., Difference in Proportions of Labels [DPL], Class Imbalance [CI]).',
-      examClue: 'Pre-training bias detection in raw datasets before model training ➔ SageMaker Clarify.',
-      keyMetrics: ['Difference in Proportions of Labels (DPL)', 'Class Imbalance (CI)', 'Facet Imbalance'],
+      description: 'Analyzes raw tabular training datasets to detect demographic imbalances and statistical bias before a machine learning (ML) model is trained (e.g., Difference in Proportions of Labels [DPL], Class Imbalance [CI], Disparate Impact).',
+      examClue: 'Pre-training bias detection in raw datasets before model training ➔ Amazon SageMaker Clarify.',
+      keyMetrics: ['Difference in Proportions of Labels (DPL)', 'Class Imbalance (CI)', 'Demographic Facet Imbalance'],
       relatedQuestions: [425, 431, 435],
     },
     {
       id: 'jumpstart',
       number: '2',
-      title: 'SageMaker JumpStart',
+      title: 'SageMaker JumpStart (Foundation Model Hub)',
       shortTitle: 'JumpStart Hub',
-      category: 'Model Hub & Acceleration',
-      service: 'SageMaker JumpStart Model Hub',
+      category: 'Model Hub & Pre-Trained Foundation Models',
+      service: 'Amazon SageMaker JumpStart Model Hub',
       badgeColor: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
-      description: 'A centralized machine learning hub that provides access to pre-trained open-weight models (Llama, Mistral, FLAN-T5), built-in algorithms, sample Jupyter notebooks, and 1-click deployment/fine-tuning templates.',
-      examClue: 'Curated hub of pre-trained open models, quick-start templates, and example notebooks in SageMaker ➔ SageMaker JumpStart.',
-      keyMetrics: ['Pre-trained Foundation Models', 'Built-in Solution Templates', '1-Click Endpoints'],
+      description: 'A centralized machine learning (ML) hub that provides access to pre-trained open-weight foundation models (such as Llama 3, Mistral, and FLAN-T5), built-in algorithms, sample Jupyter notebooks, and 1-click deployment/fine-tuning templates without writing low-level code.',
+      examClue: 'Curated hub of pre-trained open models, quick-start templates, and example notebooks in SageMaker ➔ Amazon SageMaker JumpStart.',
+      keyMetrics: ['Pre-trained Open Foundation Models (FMs)', 'Built-in Solution Blueprints', '1-Click Endpoint Deployments'],
       relatedQuestions: [422],
     },
     {
       id: 'model-cards',
       number: '3',
-      title: 'SageMaker Model Cards',
+      title: 'SageMaker Model Cards (Governance & Auditing)',
       shortTitle: 'Model Cards',
       category: 'Governance & Transparency',
-      service: 'SageMaker Model Governance & Cards',
+      service: 'Amazon SageMaker Model Governance & Cards',
       badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
       description: 'Standardized documentation framework ("fact sheets") detailing custom ML model metadata, intended business use cases, owners, data assumptions, evaluation metrics, risk ratings, and operational limitations.',
-      examClue: 'Standardized documentation / fact sheet for custom model purpose, metrics, and limitations ➔ SageMaker Model Cards. (Contrast with AWS AI Service Cards for AWS-managed AI services).',
-      keyMetrics: ['Intended Use & Limits', 'Evaluation Baselines', 'Risk & Ethical Ratings'],
+      examClue: 'Standardized documentation / fact sheet for custom model purpose, metrics, and limitations ➔ Amazon SageMaker Model Cards. (Contrast with AWS AI Service Cards for AWS-managed AI services like Rekognition or Comprehend).',
+      keyMetrics: ['Intended Use & Operational Limits', 'Evaluation Baselines & F1 Scores', 'Risk & Ethical Fairness Ratings'],
       relatedQuestions: [440, 444],
     },
     {
       id: 'clarify-explain',
       number: '4',
-      title: 'SageMaker Clarify (Explainability & SHAP)',
+      title: 'SageMaker Clarify (Explainability & SHAP Attribution)',
       shortTitle: 'SHAP Explainability',
-      category: 'Model Interpretability',
-      service: 'SageMaker Clarify (Kernel SHAP)',
+      category: 'Model Interpretability & Explainability',
+      service: 'Amazon SageMaker Clarify (Kernel SHAP)',
       badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
       description: 'Generates post-training feature attribution using Kernel SHAP (Shapley Additive exPlanations) to explain which specific user behaviors or input features most heavily influenced model predictions.',
-      examClue: 'Explaining which features drove an ML prediction or explaining recommendation behavior ➔ SageMaker Clarify (SHAP values).',
-      keyMetrics: ['Kernel SHAP Values', 'Feature Importance Rankings', 'Local & Global Explanations'],
+      examClue: 'Explaining which features drove an ML prediction or explaining recommendation behavior ➔ Amazon SageMaker Clarify (SHAP values).',
+      keyMetrics: ['Kernel SHAP (Shapley Additive exPlanations)', 'Feature Importance Rankings', 'Local & Global Decision Explanations'],
       relatedQuestions: [435, 445],
     },
     {
       id: 'model-monitor',
       number: '5',
-      title: 'SageMaker Model Monitor',
+      title: 'SageMaker Model Monitor (Production Drift)',
       shortTitle: 'Model Monitor (Drift)',
-      category: 'Production Observability',
-      service: 'SageMaker Model Monitor',
+      category: 'Production Observability & MLOps',
+      service: 'Amazon SageMaker Model Monitor',
       badgeColor: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
       description: 'Continuously monitors deployed model endpoints in production for 4 distinct drift types: Data Quality Drift, Model Quality Drift (Ground truth comparison), Bias Drift, and Feature Attribution Drift.',
-      examClue: 'Continuously detecting data drift or concept drift on deployed production endpoints ➔ SageMaker Model Monitor.',
-      keyMetrics: ['Data Quality Drift', 'Model Quality Drift', 'Bias Drift', 'Feature Attribution Drift'],
+      examClue: 'Continuously detecting data drift or concept drift on deployed production endpoints ➔ Amazon SageMaker Model Monitor.',
+      keyMetrics: ['Data Quality Drift (Missing/skewed inputs)', 'Model Quality Drift (Accuracy degradation)', 'Bias Drift (Fairness drop)', 'Feature Attribution Drift (SHAP shift)'],
       relatedQuestions: [425, 440],
     },
   ];
@@ -168,13 +179,13 @@ export const SageMakerLifecycleVisualizer: React.FC<SageMakerLifecycleVisualizer
         {/* Selected Stage Detail Box */}
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-inner">
           
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
-            <div className="flex items-center space-x-3">
-              <span className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm font-mono">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3 min-w-0">
+              <span className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm font-mono flex-shrink-0">
                 {currentStage.number}
               </span>
-              <div>
-                <h4 className="text-base sm:text-lg font-black text-white">
+              <div className="min-w-0">
+                <h4 className="text-base sm:text-lg font-black text-white truncate">
                   {currentStage.title}
                 </h4>
                 <span className="text-xs text-amber-400 font-mono font-bold">
@@ -184,36 +195,49 @@ export const SageMakerLifecycleVisualizer: React.FC<SageMakerLifecycleVisualizer
             </div>
 
             {/* Prev / Next Stage Buttons & Linked Questions */}
-            <div className="flex items-center space-x-2">
-              {currentStageIndex > 0 && (
-                <button
-                  onClick={() => setActiveStageId(stages[currentStageIndex - 1].id)}
-                  className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Prev Stage</span>
-                </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center space-x-1.5 shrink-0">
+                {currentStageIndex > 0 && (
+                  <button
+                    onClick={() => setActiveStageId(stages[currentStageIndex - 1].id)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Prev Stage</span>
+                  </button>
+                )}
+                {currentStageIndex < stages.length - 1 && (
+                  <button
+                    onClick={() => setActiveStageId(stages[currentStageIndex + 1].id)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
+                  >
+                    <span className="hidden sm:inline">Next Stage</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {currentStage.relatedQuestions && currentStage.relatedQuestions.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pl-2 border-l border-slate-800">
+                  <span className="text-xs text-slate-400 font-semibold mr-0.5">Test:</span>
+                  {currentStage.relatedQuestions.map((qId) => (
+                    <button
+                      key={qId}
+                      onClick={() => onSelectQuestion?.(qId, {
+                        view: 'visualizations',
+                        tabId: 'sagemaker-lifecycle',
+                        sectionTitle: `SageMaker MLOps: Stage ${currentStage.number} (${currentStage.shortTitle})`,
+                        subItemId: currentStage.id,
+                      })}
+                      className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
+                      title={`Practice Question ${qId}`}
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      <span>Q#{qId}</span>
+                    </button>
+                  ))}
+                </div>
               )}
-              {currentStageIndex < stages.length - 1 && (
-                <button
-                  onClick={() => setActiveStageId(stages[currentStageIndex + 1].id)}
-                  className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
-                >
-                  <span className="hidden sm:inline">Next Stage</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              )}
-              <span className="text-xs text-slate-400 font-semibold ml-1">Test In MCQ:</span>
-              {currentStage.relatedQuestions.map((qId) => (
-                <button
-                  key={qId}
-                  onClick={() => onSelectQuestion?.(qId)}
-                  className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
-                >
-                  <BookOpen className="w-3 h-3" />
-                  <span>Q#{qId}</span>
-                </button>
-              ))}
             </div>
           </div>
 

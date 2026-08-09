@@ -59,3 +59,10 @@ export type VisualizationTab =
   | 'confusion-matrix'
   | 'exam-domain-analytics';
 
+export interface NavigationOrigin {
+  view: ViewMode;
+  tabId?: string;
+  sectionTitle: string;
+  subItemId?: string;
+}
+

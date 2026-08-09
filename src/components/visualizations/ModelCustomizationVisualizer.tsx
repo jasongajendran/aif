@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sliders, Zap, DollarSign, Database, Brain, Sparkles, 
   CheckCircle2, ArrowRight, ArrowLeft, ShieldAlert, Cpu, Layers, HelpCircle,
-  BookOpen, Gauge, BarChart3, AlertTriangle, ArrowDown
+  BookOpen, Gauge, BarChart3, AlertTriangle, ArrowDown, Info
 } from 'lucide-react';
+import { NavigationOrigin } from '../../types';
 
 interface ModelCustomizationVisualizerProps {
-  onSelectQuestion?: (questionId: number) => void;
+  onSelectQuestion?: (questionId: number, origin?: NavigationOrigin) => void;
+  initialTierId?: string;
 }
 
-export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizerProps> = ({ onSelectQuestion }) => {
-  const [selectedTierId, setSelectedTierId] = useState<string>('prompt-eng');
-  const [matchedRequirement, setMatchedRequirement] = useState<string>('prompt-eng');
+export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizerProps> = ({ 
+  onSelectQuestion,
+  initialTierId,
+}) => {
+  const [selectedTierId, setSelectedTierId] = useState<string>(initialTierId || 'prompt-eng');
+  const [matchedRequirement, setMatchedRequirement] = useState<string>(initialTierId || 'prompt-eng');
+  const [showWeightsExplainer, setShowWeightsExplainer] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (initialTierId) {
+      setSelectedTierId(initialTierId);
+      setMatchedRequirement(initialTierId);
+    }
+  }, [initialTierId]);
 
   const tiers = [
     {
@@ -21,16 +34,16 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       shortName: 'Prompt Engineering',
       cost: 'Lowest ($)',
       costScore: 1,
-      dataReq: '0 to 10 Examples (Zero-shot / Few-shot)',
+      dataReq: '0 to 10 Examples (Zero-shot / Few-shot in prompt)',
       dataReqScore: 1,
-      modifiesWeights: 'No (Weights Frozen 100%)',
+      modifiesWeights: 'No (Model Weights are 100% FROZEN)',
       weightsUpdated: false,
-      latencyImpact: 'Low to Medium (Prompt token length)',
-      computeRequired: 'Standard API Inference Call',
-      bestFor: 'Persona steering, output format templates, chain-of-thought reasoning, immediate testing.',
-      mechanism: 'Crafting targeted instructions, system messages, and few-shot input/output examples directly in the inference request context window.',
-      examRule: 'Always evaluate Prompt Engineering first before considering heavier customization options (lowest effort & cost).',
-      exampleCode: `// Prompt Engineering Request\nconst response = await bedrock.invokeModel({\n  modelId: "anthropic.claude-3-haiku",\n  prompt: "You are a customer support agent. Summarize this complaint in 2 bullet points:\\n..."\n});`,
+      latencyImpact: 'Low to Medium (Depends on prompt token length)',
+      computeRequired: 'Standard API Inference Call (No GPU training)',
+      bestFor: 'Persona steering, output format templates, chain-of-thought (CoT) step-by-step reasoning, immediate testing.',
+      mechanism: 'Crafting targeted instructions, system messages, and few-shot input/output examples directly in the inference request context window. The foundation model (FM) neural network weights remain completely unchanged.',
+      examRule: 'Always evaluate Prompt Engineering first before considering heavier customization options (lowest effort, zero training cost, and fastest iteration).',
+      exampleCode: `// Prompt Engineering API Request\nconst response = await bedrock.invokeModel({\n  modelId: "anthropic.claude-3-haiku",\n  prompt: "You are a customer support agent. Summarize this complaint in 2 bullet points:\\n..."\n});`,
       relatedQuestions: [8, 37, 78, 122, 428],
     },
     {
@@ -40,33 +53,33 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       shortName: 'RAG Knowledge Bases',
       cost: 'Low to Medium ($$)',
       costScore: 2,
-      dataReq: 'Unstructured Enterprise Docs in S3 (No labeled pairs)',
+      dataReq: 'Unstructured Enterprise Docs in Amazon S3 (No labeled training pairs)',
       dataReqScore: 2,
-      modifiesWeights: 'No (Weights Frozen 100%)',
+      modifiesWeights: 'No (Model Weights are 100% FROZEN)',
       weightsUpdated: false,
-      latencyImpact: 'Adds vector search retrieval overhead (~50-200ms)',
-      computeRequired: 'Vector DB Indexing + Standard FM Inference',
+      latencyImpact: 'Adds vector similarity search retrieval overhead (~50-200ms)',
+      computeRequired: 'Vector Database Indexing + Standard FM Inference',
       bestFor: 'Dynamic, private, or frequently updated enterprise knowledge with verifiable source citations and minimal hallucinations.',
-      mechanism: 'Extracting semantic chunks from Amazon S3, storing vector embeddings in OpenSearch Serverless, and dynamically retrieving Top-K context chunks into the prompt.',
-      examRule: 'Choose RAG when the model needs current/private data, factual grounding, or citations without modifying weights.',
+      mechanism: 'Extracting semantic text chunks from Amazon Simple Storage Service (Amazon S3), generating vector embeddings via an embedding model (like Amazon Titan Text Embeddings), storing them in Amazon OpenSearch Serverless, and dynamically retrieving Top-K context chunks into the prompt.',
+      examRule: 'Choose Retrieval-Augmented Generation (RAG) when the model needs current/private company data, factual grounding, or citations without modifying weights.',
       exampleCode: `// Bedrock Knowledge Base RAG Request\nconst result = await bedrockAgentRuntime.retrieveAndGenerate({\n  input: { text: "What is our 2026 expense policy?" },\n  retrieveAndGenerateConfiguration: {\n    type: "KNOWLEDGE_BASE",\n    knowledgeBaseConfiguration: { knowledgeBaseId: "KB-94812" }\n  }\n});`,
       relatedQuestions: [1, 10, 45, 421, 423, 426, 427, 443],
     },
     {
       id: 'fine-tuning',
       tierNumber: 3,
-      name: '3. Supervised Fine-Tuning (Instruction Tuning)',
+      name: '3. Supervised Fine-Tuning (Instruction Tuning / PEFT / LoRA)',
       shortName: 'Supervised Fine-Tuning',
       cost: 'Medium ($$$)',
       costScore: 3,
-      dataReq: 'Hundreds to Thousands of Labeled Prompt-Response Pairs (JSONL)',
+      dataReq: 'Hundreds to Thousands of Labeled Prompt-Response Pairs (JSON Lines / JSONL format)',
       dataReqScore: 3,
-      modifiesWeights: 'Yes (Updates specific model weights / LoRA adapters)',
+      modifiesWeights: 'Yes (Updates specific model weights or trains LoRA adapter layers)',
       weightsUpdated: true,
-      latencyImpact: 'Zero (Model size & architecture unchanged)',
-      computeRequired: 'Bedrock Custom Model Training Job',
+      latencyImpact: 'Zero additional latency (Model size & architecture unchanged)',
+      computeRequired: 'Amazon Bedrock Custom Model Training Job',
       bestFor: 'Teaching a specific writing style, domain syntax, strict structured JSON schema, or consistent specialized task behavior.',
-      mechanism: 'Supervised fine-tuning (SFT) adjusts the model parameters using high-quality curated prompt-response pairs. Supported natively in Amazon Bedrock Custom Models and SageMaker.',
+      mechanism: 'Supervised Fine-Tuning (SFT) adjusts the mathematical parameters (weights) of the neural network using curated prompt-completion pairs. With Parameter-Efficient Fine-Tuning (PEFT) and Low-Rank Adaptation (LoRA), base weights are frozen while lightweight adapter layers are trained, reducing GPU memory and compute by ~85%.',
       examRule: 'Choose Fine-Tuning when you need to change HOW the model responds (tone, style, output schema, specialized task pattern).',
       exampleCode: `// Training Data Format (train.jsonl)\n{"prompt": "Classify claim #892: Patient broke leg skiing", "completion": "CATEGORY: ORTHO_ACCIDENT | SEVERITY: HIGH"}\n{"prompt": "Classify claim #893: Annual dental checkup", "completion": "CATEGORY: DENTAL_ROUTINE | SEVERITY: LOW"}`,
       relatedQuestions: [5, 49, 110, 428, 438],
@@ -74,19 +87,19 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
     {
       id: 'continued-pretraining',
       tierNumber: 4,
-      name: '4. Continued Pre-Training (Domain Adaptation)',
+      name: '4. Continued Pre-Training (Domain Adaptation Fine-Tuning / DAFT)',
       shortName: 'Continued Pre-Training',
       cost: 'High ($$$$)',
       costScore: 4,
-      dataReq: 'Gigabytes of Unlabeled Domain Text (Millions of tokens)',
+      dataReq: 'Gigabytes of Unlabeled Domain Text (Millions of raw tokens)',
       dataReqScore: 4,
-      modifiesWeights: 'Yes (Base weights updated on domain text)',
+      modifiesWeights: 'Yes (Base foundation model weights are updated on raw domain text)',
       weightsUpdated: true,
-      latencyImpact: 'Zero (Same base architecture)',
-      computeRequired: 'Distributed GPU Clusters (AWS Trainium / P4/P5 instances)',
+      latencyImpact: 'Zero additional latency (Same base model architecture)',
+      computeRequired: 'Distributed GPU/Trainium Clusters (AWS Trainium / P4/P5 EC2 instances)',
       bestFor: 'Teaching an existing foundation model deep domain-specific vocabulary, dense jargon, and concepts (e.g. legal case law, clinical medical journals, financial regulations).',
-      mechanism: 'Continues the self-supervised pre-training objective on vast unlabeled domain text corpora so the base model internalizes domain knowledge without training from scratch.',
-      examRule: 'Choose Continued Pre-Training when a model lacks understanding of specialized domain vocabulary or industry literature (e.g., Q438).',
+      mechanism: 'Continues the self-supervised pre-training objective on vast unlabeled domain text corpora so the base model internalizes domain knowledge into its internal parameters without training from scratch.',
+      examRule: 'Choose Continued Pre-Training (DAFT) when an existing foundation model lacks understanding of specialized domain vocabulary or industry literature (e.g., Q438).',
       exampleCode: `// Raw Unlabeled Domain Text Ingestion\n"Section 14(a)(1) under SEC Rule 14a-8 requires registrant to include shareholder proposal unless excludable under subsection (i)(7)..."`,
       relatedQuestions: [50, 112, 438],
     },
@@ -95,16 +108,16 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
       tierNumber: 5,
       name: '5. Pre-Training from Scratch',
       shortName: 'Pre-Training from Scratch',
-      cost: 'Highest ($$$$$ Millions)',
+      cost: 'Highest ($$$$$ Millions of Dollars)',
       costScore: 5,
-      dataReq: 'Trillions of Unlabeled Tokens (Web-scale corpora)',
+      dataReq: 'Trillions of Unlabeled Tokens (Web-scale corpora across multiple languages)',
       dataReqScore: 5,
-      modifiesWeights: 'Yes (Initializes all weights randomly)',
+      modifiesWeights: 'Yes (Initializes all neural network weights randomly from scratch)',
       weightsUpdated: true,
       latencyImpact: 'Requires dedicated GPU clusters (Trainium / SageMaker HyperPod)',
-      computeRequired: 'Thousands of Trainium/H100 chips for months',
+      computeRequired: 'Thousands of AWS Trainium / NVIDIA H100 accelerators for months',
       bestFor: 'Creating a brand-new foundational architecture for proprietary national languages or highly specialized novel modalities.',
-      mechanism: 'Training an entire foundation model from random weight initialization. Requires massive compute clusters (AWS Trainium, EC2 P5/Trn1 instances), multi-million dollar budgets, and months of engineering.',
+      mechanism: 'Training an entire foundation model from random weight initialization. Requires massive compute clusters (AWS Trainium, Amazon EC2 P5/Trn1 instances), multi-million dollar budgets, and months of engineering.',
       examRule: 'Almost NEVER the right choice in AIF-C01 exam scenarios due to extreme cost, compute, and time constraints.',
       exampleCode: `// Random Weight Initialization\nmodel = TransformerModel(vocab_size=64000, hidden_dim=8192, layers=64)\n// Distributed training on 2,048 AWS Trainium accelerators across 90 days...`,
       relatedQuestions: [51, 428, 439],
@@ -169,12 +182,89 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
-            The 5 Foundation Model Customization Tiers
+            The 5 Foundation Model (FM) Customization Tiers
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            AWS categorizes model customization into 5 progressive tiers ranging from lightweight prompt engineering to pre-training from scratch. On the exam, always select the lowest-complexity approach that satisfies the functional requirement.
+            AWS categorizes foundation model (FM) customization into 5 progressive tiers ranging from lightweight prompt engineering to pre-training from scratch. On the AWS Certified AI Practitioner exam, always select the lowest-complexity approach that satisfies the functional requirement.
           </p>
         </div>
+      </div>
+
+      {/* JARGON EXPLAINER: What are Model Weights & What is an FM? */}
+      <div className="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+        <div 
+          onClick={() => setShowWeightsExplainer(!showWeightsExplainer)}
+          className="flex items-center justify-between cursor-pointer select-none"
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/20 shrink-0">
+              <Brain className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400">
+                  Concept Breakdown for Beginners & Practitioners
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                  Exam Essential
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white">
+                What does "Model Weights" mean? And what is a "Foundation Model (FM)"?
+              </h3>
+            </div>
+          </div>
+
+          <button className="text-xs text-amber-300 font-bold px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors">
+            {showWeightsExplainer ? 'Hide Details' : 'Show Details'}
+          </button>
+        </div>
+
+        {showWeightsExplainer && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2 border-t border-slate-800 animate-in fade-in duration-200">
+            
+            {/* Box 1: What is a Foundation Model (FM)? */}
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                <h4 className="text-sm font-bold text-amber-300">
+                  1. What is a Foundation Model (FM)?
+                </h4>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                A <strong>Foundation Model (FM)</strong> is a massive, multi-purpose AI brain (like Anthropic Claude, Amazon Titan, or Meta Llama) pre-trained on billions of words from across the web.
+              </p>
+              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 space-y-1">
+                <span className="text-amber-400 font-bold block">💡 Intuitive Analogy:</span>
+                <p className="italic">
+                  Instead of building an AI that only does one narrow math formula, an FM is like a university graduate with broad general reading, coding, translation, and reasoning skills. You can give them new instructions or reference books without having to send them back to university.
+                </p>
+              </div>
+            </div>
+
+            {/* Box 2: What are Model Weights? */}
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+              <div className="flex items-center space-x-2">
+                <Cpu className="w-4 h-4 text-cyan-400 shrink-0" />
+                <h4 className="text-sm font-bold text-cyan-300">
+                  2. What are "Model Weights" (Parameters)?
+                </h4>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                <strong>Model Weights</strong> are the billions of internal mathematical numbers (coefficients) stored in the neural network. They represent the AI's permanent memory and determine which word it predicts next.
+              </p>
+              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 space-y-1">
+                <span className="text-cyan-400 font-bold block">🎛️ The Tuning Knob Metaphor:</span>
+                <p className="italic">
+                  Think of weights as billions of microscopic tuning knobs. 
+                  <br />• <strong>Frozen Weights (Prompting & RAG):</strong> You leave every knob locked in place and only supply notes or reference sheets.
+                  <br />• <strong>Updating Weights (Fine-Tuning):</strong> You run a GPU training job to physically turn a few knobs so the AI learns a new style or syntax permanently.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        )}
       </div>
 
       {/* Interactive Requirement Matcher Simulator */}
@@ -271,13 +361,13 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
         {/* Selected Tier Deep-Dive Details */}
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-inner">
           
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
-            <div className="flex items-center space-x-3">
-              <span className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm font-mono">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3 min-w-0">
+              <span className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm font-mono flex-shrink-0 shadow-md shadow-amber-500/20">
                 T{currentTier.tierNumber}
               </span>
-              <div>
-                <h4 className="text-base sm:text-lg font-black text-white">
+              <div className="min-w-0">
+                <h4 className="text-base sm:text-lg font-black text-white truncate">
                   {currentTier.name}
                 </h4>
                 <span className="text-xs text-amber-400 font-mono font-bold">
@@ -287,35 +377,49 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
             </div>
 
             {/* Prev / Next Tier Buttons & Linked Questions */}
-            <div className="flex items-center space-x-2">
-              {currentTierIndex > 0 && (
-                <button
-                  onClick={() => handleSelectTier(tiers[currentTierIndex - 1].id)}
-                  className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Prev Tier</span>
-                </button>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center space-x-1.5 shrink-0">
+                {currentTierIndex > 0 && (
+                  <button
+                    onClick={() => handleSelectTier(tiers[currentTierIndex - 1].id)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1 shadow-sm"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Prev Tier</span>
+                  </button>
+                )}
+                {currentTierIndex < tiers.length - 1 && (
+                  <button
+                    onClick={() => handleSelectTier(tiers[currentTierIndex + 1].id)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1 shadow-sm"
+                  >
+                    <span>Next Tier</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {currentTier.relatedQuestions && currentTier.relatedQuestions.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800/80">
+                  <span className="text-[11px] text-slate-400 font-semibold px-1">Practice:</span>
+                  {currentTier.relatedQuestions.map((qId) => (
+                    <button
+                      key={qId}
+                      onClick={() => onSelectQuestion?.(qId, {
+                        view: 'visualizations',
+                        tabId: 'model-customization',
+                        sectionTitle: `Customization: Tier ${currentTier.tierNumber} (${currentTier.shortName})`,
+                        subItemId: currentTier.id,
+                      })}
+                      className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-400 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/30 transition-all flex items-center space-x-1 shadow-sm"
+                      title={`Test in MCQ: Question ${qId}`}
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      <span>Q#{qId}</span>
+                    </button>
+                  ))}
+                </div>
               )}
-              {currentTierIndex < tiers.length - 1 && (
-                <button
-                  onClick={() => handleSelectTier(tiers[currentTierIndex + 1].id)}
-                  className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center space-x-1"
-                >
-                  <span className="hidden sm:inline">Next Tier</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              )}
-              {currentTier.relatedQuestions.map((qId) => (
-                <button
-                  key={qId}
-                  onClick={() => onSelectQuestion?.(qId)}
-                  className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
-                >
-                  <BookOpen className="w-3 h-3" />
-                  <span>Q#{qId}</span>
-                </button>
-              ))}
             </div>
           </div>
 

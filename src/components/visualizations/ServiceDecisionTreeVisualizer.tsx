@@ -1,19 +1,30 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Compass, Search, ArrowRight, CheckCircle2, AlertTriangle, 
   Sparkles, BookOpen, Layers, GitBranch, Cpu, FileText, 
   Mic, Eye, MessageSquare, Shield, HelpCircle, Server, Code, Volume2,
   UserCheck, Users
 } from 'lucide-react';
+import { NavigationOrigin } from '../../types';
 
 interface ServiceDecisionTreeVisualizerProps {
-  onSelectQuestion?: (questionId: number) => void;
+  onSelectQuestion?: (questionId: number, origin?: NavigationOrigin) => void;
+  initialScenarioId?: string;
 }
 
-export const ServiceDecisionTreeVisualizer: React.FC<ServiceDecisionTreeVisualizerProps> = ({ onSelectQuestion }) => {
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string>('ocr-tables');
+export const ServiceDecisionTreeVisualizer: React.FC<ServiceDecisionTreeVisualizerProps> = ({ 
+  onSelectQuestion,
+  initialScenarioId,
+}) => {
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>(initialScenarioId || 'ocr-tables');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  useEffect(() => {
+    if (initialScenarioId) {
+      setSelectedScenarioId(initialScenarioId);
+    }
+  }, [initialScenarioId]);
 
   const examScenarios = [
     {
@@ -377,35 +388,43 @@ export const ServiceDecisionTreeVisualizer: React.FC<ServiceDecisionTreeVisualiz
         {/* Active Scenario Detailed Breakdown */}
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-inner">
           
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center font-bold">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center font-bold flex-shrink-0">
                 <ActiveServiceIcon className="w-5 h-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-xs font-mono uppercase text-slate-400 font-bold block">
                   Prescribed Architectural Winner
                 </span>
-                <h4 className="text-lg sm:text-xl font-black text-white">
+                <h4 className="text-lg sm:text-xl font-black text-white truncate">
                   {activeScenario.winningService}
                 </h4>
               </div>
             </div>
 
             {/* Linked Questions */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-400 font-semibold">Test In MCQ:</span>
-              {activeScenario.relatedQuestions.map((qId) => (
-                <button
-                  key={qId}
-                  onClick={() => onSelectQuestion?.(qId)}
-                  className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
-                >
-                  <BookOpen className="w-3 h-3" />
-                  <span>Q#{qId}</span>
-                </button>
-              ))}
-            </div>
+            {activeScenario.relatedQuestions && activeScenario.relatedQuestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                <span className="text-xs text-slate-400 font-semibold mr-1">Test In MCQ:</span>
+                {activeScenario.relatedQuestions.map((qId) => (
+                  <button
+                    key={qId}
+                    onClick={() => onSelectQuestion?.(qId, {
+                      view: 'visualizations',
+                      tabId: 'service-decision-tree',
+                      sectionTitle: `Service Selector: ${activeScenario.winningService}`,
+                      subItemId: activeScenario.id,
+                    })}
+                    className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
+                    title={`Practice Question ${qId}`}
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>Q#{qId}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs sm:text-sm">

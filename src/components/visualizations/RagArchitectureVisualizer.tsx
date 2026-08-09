@@ -4,9 +4,10 @@ import {
   ArrowRight, ShieldCheck, Layers, HelpCircle, BookOpen, AlertTriangle,
   Server, ArrowDown, HardDrive, RefreshCw, Filter, Zap, Activity
 } from 'lucide-react';
+import { NavigationOrigin } from '../../types';
 
 interface RagArchitectureVisualizerProps {
-  onSelectQuestion?: (questionId: number) => void;
+  onSelectQuestion?: (questionId: number, origin?: NavigationOrigin) => void;
 }
 
 export const RagArchitectureVisualizer: React.FC<RagArchitectureVisualizerProps> = ({ onSelectQuestion }) => {
@@ -20,40 +21,40 @@ export const RagArchitectureVisualizer: React.FC<RagArchitectureVisualizerProps>
   const ingestionSteps = [
     {
       id: 1,
-      title: '1. Source Documents in S3',
-      shortTitle: 'S3 Documents',
-      service: 'Amazon S3 Bucket',
+      title: '1. Source Documents in Amazon S3',
+      shortTitle: 'Amazon S3 Storage',
+      service: 'Amazon Simple Storage Service (Amazon S3)',
       icon: HardDrive,
       accentColor: 'from-amber-500 to-orange-600',
       badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
-      description: 'Enterprise documents (PDFs, Markdown, Word, CSV, HTML) stored securely in Amazon S3 buckets with IAM least-privilege access, KMS encryption, and S3 Lifecycle rules.',
-      examClue: 'Knowledge Base documents reside in Amazon S3; sync jobs ingest new or updated files.',
+      description: 'Enterprise documents (PDFs, Markdown, Word docx, CSV, HTML) stored securely in Amazon Simple Storage Service (Amazon S3) buckets with AWS Identity and Access Management (AWS IAM) least-privilege access, AWS Key Management Service (AWS KMS) encryption, and S3 Lifecycle tiering rules.',
+      examClue: 'Knowledge Base documents reside in Amazon S3; Bedrock sync jobs automatically ingest new or modified files.',
       payloadExample: `s3://enterprise-kb-docs-prod/policies/\n├── 2026_Travel_Expenses_Policy.pdf\n├── HR_Remote_Work_Guidelines.docx\n└── Compliance_Code_of_Conduct.md`,
       relatedQuestions: [427, 434, 439],
     },
     {
       id: 2,
-      title: '2. Document Parsing & Extraction',
-      shortTitle: 'Text Parsing',
-      service: 'Amazon Bedrock / Amazon Textract',
+      title: '2. Document Parsing & Optical Character Recognition (OCR)',
+      shortTitle: 'Text & OCR Parsing',
+      service: 'Amazon Bedrock Parsing / Amazon Textract (OCR)',
       icon: FileText,
       accentColor: 'from-blue-500 to-cyan-600',
       badgeColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
-      description: 'Parsing engine extracts raw text, tables, and document structure. If documents are scanned PDFs or images, Amazon Textract is used to extract form key-value pairs and tabular layouts.',
-      examClue: 'First step in Bedrock Knowledge Base ingestion is to Parse documents.',
+      description: 'The parsing engine extracts raw digital text, tables, and hierarchical structure. For scanned PDFs or images, Amazon Textract provides Optical Character Recognition (OCR) to accurately extract key-value form fields and tabular rows/columns rather than garbled flat text.',
+      examClue: 'First step in Bedrock Knowledge Base data ingestion is Document Parsing. Amazon Textract is used for advanced Optical Character Recognition (OCR) on scanned documents.',
       payloadExample: `// Parsed Document Stream\n{\n  "doc_id": "doc_travel_2026",\n  "raw_text": "Section 4.2: Maximum per diem for meals is $85...",\n  "metadata": { "department": "Finance", "year": 2026 }\n}`,
       relatedQuestions: [427, 433],
     },
     {
       id: 3,
-      title: '3. Text Chunking Strategy',
+      title: '3. Semantic Text Chunking Strategy',
       shortTitle: 'Text Chunking',
       service: 'Bedrock Chunking Engine',
       icon: Layers,
       accentColor: 'from-purple-500 to-indigo-600',
       badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
-      description: 'Splits large documents into manageable text chunks with configurable token sizes (e.g. 300 tokens) and overlap (e.g. 20%) to preserve context boundaries within model limits.',
-      examClue: 'Chunking ensures data fits token context limits while keeping semantic continuity.',
+      description: 'Document Chunking divides long multi-page documents into smaller, bite-sized passages with configurable token counts (e.g., 300 to 1,000 tokens) and an overlap buffer (e.g., 20%). Chunking ensures passages fit within model context windows while overlap prevents cutting thoughts in half across chunk edges.',
+      examClue: 'Chunking ensures data fits foundation model token context limits while keeping semantic continuity across boundaries.',
       payloadExample: `Chunk 1 (Tokens: 300, Overlap: 20%):\n"...eligible for meal reimbursement up to $85/day with receipts..."\n\nChunk 2 (Tokens: 300, Overlap: 20%):\n"...with receipts. Hotel lodging is capped at $220/night in Tier-1 cities..."`,
       relatedQuestions: [427],
     },
@@ -61,25 +62,25 @@ export const RagArchitectureVisualizer: React.FC<RagArchitectureVisualizerProps>
       id: 4,
       title: '4. Vector Embedding Generation',
       shortTitle: 'Vector Embeddings',
-      service: 'Amazon Titan Embeddings / Cohere Embed',
+      service: 'Amazon Titan Text Embeddings / Cohere Embed',
       icon: Cpu,
       accentColor: 'from-emerald-500 to-teal-600',
       badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-      description: 'Each text chunk is converted into a high-dimensional mathematical vector (e.g., 1536 floating point numbers) that captures deep semantic meaning and conceptual relationships.',
-      examClue: 'Embedding models convert text chunks into vector representations.',
+      description: 'Each text chunk is converted into high-dimensional vector embeddings (an array of 1,536 floating-point numbers). Embeddings place concepts with similar semantic meanings close together geometrically in coordinate space, enabling semantic search rather than exact keyword matches.',
+      examClue: 'Embedding models convert unstructured text chunks into numeric vector representations.',
       payloadExample: `// Titan Text Embeddings V2\n[\n  0.02451, -0.08912, 0.31450, -0.11420,\n  0.00541, 0.45120, -0.09124, ... (1536 dimensions)\n]`,
       relatedQuestions: [421, 427],
     },
     {
       id: 5,
       title: '5. Vector Store & Indexing',
-      shortTitle: 'Vector Index Store',
+      shortTitle: 'Vector Database',
       service: 'Amazon OpenSearch Serverless / Kendra / pgvector',
       icon: Database,
       accentColor: 'from-amber-500 to-rose-600',
       badgeColor: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
-      description: 'Vector embeddings along with source chunk text and metadata are written into a managed vector database configured for approximate nearest neighbor (k-NN) similarity search.',
-      examClue: 'Amazon OpenSearch Serverless is the default managed vector store for Bedrock Knowledge Bases.',
+      description: 'Vector embeddings along with source chunk text and metadata are written into a managed vector database (such as Amazon OpenSearch Serverless or Amazon Aurora PostgreSQL with pgvector) configured for approximate k-nearest neighbor (k-NN) similarity search.',
+      examClue: 'Amazon OpenSearch Serverless is the primary managed vector database for Amazon Bedrock Knowledge Bases.',
       payloadExample: `// OpenSearch Serverless Vector Document\n{\n  "id": "chunk_9841",\n  "vector": [0.02451, -0.08912, ...],\n  "text": "Hotel lodging is capped at $220/night...",\n  "source_uri": "s3://enterprise-kb-docs-prod/policies/2026_Travel.pdf"\n}`,
       relatedQuestions: [421, 427],
     },
@@ -88,27 +89,27 @@ export const RagArchitectureVisualizer: React.FC<RagArchitectureVisualizerProps>
   const inferenceSteps = [
     {
       id: 1,
-      title: '1. User Prompt & Query Submission',
+      title: '1. User Prompt & Natural Language Query',
       shortTitle: 'User Prompt',
       service: 'Client Application / Amazon Bedrock API',
       icon: Search,
       accentColor: 'from-amber-500 to-orange-600',
       badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
       description: 'The end-user enters a natural language question (e.g., "What are our 2026 remote work travel expense limits?").',
-      examClue: 'User questions may require fresh, internal, or proprietary knowledge not in pre-training weights.',
+      examClue: 'User questions may require fresh, internal, or proprietary knowledge not in foundation model (FM) pre-training weights.',
       payloadExample: `{\n  "query": "What are our 2026 remote work travel expense limits?",\n  "sessionId": "sess-94812",\n  "userId": "emp-4821"\n}`,
       relatedQuestions: [421, 423],
     },
     {
       id: 2,
-      title: '2. Query Vectorization',
+      title: '2. Query Vectorization (Runtime Embedding)',
       shortTitle: 'Query Vector',
-      service: 'Embedding Model (Amazon Titan Embeddings)',
+      service: 'Embedding Model (Amazon Titan Text Embeddings)',
       icon: Cpu,
       accentColor: 'from-blue-500 to-cyan-600',
       badgeColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
-      description: 'The user\'s query is converted on-the-fly into a dense vector embedding using the EXACT SAME embedding model that indexed the knowledge base.',
-      examClue: 'Query and documents MUST be embedded using the same vector dimensions and embedding model.',
+      description: 'The user\'s query is converted on-the-fly into a dense vector embedding using the EXACT SAME embedding model that indexed the knowledge base documents.',
+      examClue: 'Query and documents MUST be embedded using the same vector dimensions and embedding model algorithm.',
       payloadExample: `query_vector = titan_client.generate_embedding(\n  text="What are our 2026 remote work travel expense limits?"\n)\n// Output: [0.02381, -0.08845, 0.31502, ...]`,
       relatedQuestions: [421, 427],
     },
@@ -116,38 +117,38 @@ export const RagArchitectureVisualizer: React.FC<RagArchitectureVisualizerProps>
       id: 3,
       title: '3. Vector Similarity Search (Top-K Retrieval)',
       shortTitle: 'Top-K Retrieval',
-      service: 'Vector Database (OpenSearch Serverless / Kendra)',
+      service: 'Vector Database (Amazon OpenSearch Serverless / Kendra)',
       icon: Database,
       accentColor: 'from-purple-500 to-indigo-600',
       badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
-      description: 'The vector store executes cosine similarity or dot product search to find the Top-K most semantically relevant text chunks from the enterprise index.',
-      examClue: 'Context Relevance evaluates if retrieved chunks actually match the user\'s intent.',
+      description: 'The vector database executes cosine similarity or dot product search to find the Top-K (e.g., top 3 to 5) most semantically relevant text chunks from the enterprise index.',
+      examClue: 'Context Relevance metric evaluates whether the retrieved Top-K chunks actually match the user\'s intent.',
       payloadExample: `// Top-2 Retrieved Authoritative Chunks (Score: 0.94)\n1. "Policy 2026 Sec 4: Meal limit $85/day, Hotel max $220/night."\n2. "Policy 2026 Sec 7: Mileage reimbursement is $0.67 per mile."`,
       relatedQuestions: [421, 426],
     },
     {
       id: 4,
-      title: '4. Prompt Augmentation & Guardrails',
+      title: '4. Prompt Augmentation & Safety Guardrails',
       shortTitle: 'Prompt Augmenter',
-      service: 'Bedrock Knowledge Bases & Guardrails',
+      service: 'Amazon Bedrock Knowledge Bases & Guardrails',
       icon: ShieldCheck,
       accentColor: 'from-emerald-500 to-teal-600',
       badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-      description: 'The system combines original user prompt + retrieved authoritative context chunks + system instructions + safety guardrails into an augmented prompt payload.',
-      examClue: 'RAG grounds the model by providing authoritative context in the prompt payload.',
+      description: 'The system combines original user prompt + retrieved authoritative context chunks + system instructions + Amazon Bedrock Guardrails (for PII masking and denied topic filtering) into an augmented prompt payload.',
+      examClue: 'Retrieval-Augmented Generation (RAG) grounds the model by injecting authoritative context chunks into the prompt payload.',
       payloadExample: `System: You are an enterprise policy assistant. Answer ONLY using the context below. If not found, say you do not know.\n\nContext:\n[Chunk 1] "Meal limit $85/day, Hotel max $220/night."\n\nUser Question:\n"What are our 2026 remote work travel expense limits?"`,
       relatedQuestions: [421, 423, 443],
     },
     {
       id: 5,
-      title: '5. Foundation Model Inference & Grounded Answer',
+      title: '5. Foundation Model (FM) Inference & Grounded Answer',
       shortTitle: 'Grounded Output',
-      service: 'Amazon Bedrock FM (Claude 3.5 / Nova Pro / Llama 3)',
+      service: 'Amazon Bedrock Foundation Model (Claude 3.5 / Titan / Nova / Llama 3)',
       icon: Sparkles,
       accentColor: 'from-amber-500 to-rose-600',
       badgeColor: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
-      description: 'The Foundation Model synthesizes the retrieved context and answers the query with source citations, minimizing hallucinations and ensuring enterprise accuracy.',
-      examClue: 'Faithfulness metric evaluates whether generated answers are strictly supported by retrieved context.',
+      description: 'The Foundation Model (FM) synthesizes the retrieved context and answers the query with source citations, eliminating hallucinations and ensuring enterprise factual accuracy.',
+      examClue: 'Faithfulness metric evaluates whether generated answers are strictly grounded in retrieved context without hallucinations.',
       payloadExample: `{\n  "answer": "According to the 2026 Travel Expense Policy (Section 4), meal expenses are reimbursed up to $85/day, and lodging is capped at $220/night.",\n  "citations": ["s3://enterprise-kb-docs-prod/policies/2026_Travel.pdf#page=4"]\n}`,
       relatedQuestions: [421, 423, 426, 443],
     },
@@ -344,13 +345,13 @@ export const RagArchitectureVisualizer: React.FC<RagArchitectureVisualizerProps>
         {/* Step Inspector & Live Payload Preview */}
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-inner">
           
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center font-bold">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center font-bold flex-shrink-0">
                 <StepIcon className="w-5 h-5" />
               </div>
-              <div>
-                <h4 className="text-base sm:text-lg font-black text-white">
+              <div className="min-w-0">
+                <h4 className="text-base sm:text-lg font-black text-white truncate">
                   {selectedStepData.title}
                 </h4>
                 <span className="text-xs text-amber-400 font-mono font-bold">
@@ -360,20 +361,27 @@ export const RagArchitectureVisualizer: React.FC<RagArchitectureVisualizerProps>
             </div>
 
             {/* Linked Exam Questions */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-400 font-semibold">Practice Questions:</span>
-              {selectedStepData.relatedQuestions.map((qId) => (
-                <button
-                  key={qId}
-                  onClick={() => onSelectQuestion?.(qId)}
-                  className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
-                  title={`Open Question ${qId} in MCQ Bank`}
-                >
-                  <BookOpen className="w-3 h-3" />
-                  <span>Q#{qId}</span>
-                </button>
-              ))}
-            </div>
+            {selectedStepData.relatedQuestions && selectedStepData.relatedQuestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-slate-400 font-semibold mr-1">Test In MCQ:</span>
+                {selectedStepData.relatedQuestions.map((qId) => (
+                  <button
+                    key={qId}
+                    onClick={() => onSelectQuestion?.(qId, {
+                      view: 'visualizations',
+                      tabId: 'rag-architecture',
+                      sectionTitle: `RAG Architecture: ${activePhase === 'ingestion' ? 'Ingestion' : 'Inference'} - ${selectedStepData.shortTitle}`,
+                      subItemId: `${activePhase}-${selectedStepData.id}`,
+                    })}
+                    className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 text-xs font-mono font-bold border border-amber-500/40 transition-all flex items-center space-x-1"
+                    title={`Open Question ${qId} in MCQ Bank`}
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>Q#{qId}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 2-Column Info & Code Box */}

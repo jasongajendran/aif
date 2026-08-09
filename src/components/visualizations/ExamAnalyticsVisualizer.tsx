@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Question } from '../../types';
+import { Question, NavigationOrigin } from '../../types';
 import { 
   BarChart3, PieChart, Layers, Search, Sparkles, 
   CheckCircle2, ArrowRight, BookOpen, Filter, Hash
@@ -7,7 +7,7 @@ import {
 
 interface ExamAnalyticsVisualizerProps {
   questions: Question[];
-  onSelectQuestion?: (questionId: number) => void;
+  onSelectQuestion?: (questionId: number, origin?: NavigationOrigin) => void;
 }
 
 export const ExamAnalyticsVisualizer: React.FC<ExamAnalyticsVisualizerProps> = ({ 
@@ -206,7 +206,12 @@ export const ExamAnalyticsVisualizer: React.FC<ExamAnalyticsVisualizerProps> = (
               </div>
 
               <button
-                onClick={() => onSelectQuestion?.(q.id)}
+                onClick={() => onSelectQuestion?.(q.id, {
+                  view: 'visualizations',
+                  tabId: 'exam-domain-analytics',
+                  sectionTitle: `Question Analytics: Q#${q.id} (Domain: ${q.domain})`,
+                  subItemId: String(q.id),
+                })}
                 className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center space-x-1 transition-all shrink-0 shadow-sm"
               >
                 <span>Practice Q{q.id}</span>

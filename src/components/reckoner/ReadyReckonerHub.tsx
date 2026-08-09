@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { ReckonerTab, Question } from '../../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { ReckonerTab, Question, NavigationOrigin } from '../../types';
 import { ComparisonTables } from './ComparisonTables';
 import { LogicFlows } from './LogicFlows';
 import { CodeSnippets } from './CodeSnippets';
 import { ExamGoldenRules } from './ExamGoldenRules';
 import { DomainCheatSheets } from './DomainCheatSheets';
+import { AITerminologyGlossary } from '../AITerminologyGlossary';
 import { 
   Table, 
   GitFork, 
@@ -18,7 +19,9 @@ import {
 
 interface ReadyReckonerHubProps {
   questions: Question[];
-  onSelectQuestion: (questionId: number) => void;
+  onSelectQuestion: (questionId: number, origin?: NavigationOrigin) => void;
+  initialTab?: ReckonerTab;
+  initialSubItemId?: string;
   onOpenVisualizations?: () => void;
   onOpenPractice?: () => void;
 }
@@ -26,11 +29,19 @@ interface ReadyReckonerHubProps {
 export const ReadyReckonerHub: React.FC<ReadyReckonerHubProps> = ({
   questions,
   onSelectQuestion,
+  initialTab = 'comparison-tables',
+  initialSubItemId,
   onOpenVisualizations,
   onOpenPractice
 }) => {
-  const [activeTab, setActiveTab] = useState<ReckonerTab>('comparison-tables');
+  const [activeTab, setActiveTab] = useState<ReckonerTab>(initialTab);
   const contentTopRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const modules = [
     {
@@ -130,6 +141,9 @@ export const ReadyReckonerHub: React.FC<ReadyReckonerHubProps> = ({
           </div>
         </div>
       </div>
+
+      {/* AI Terminology & Acronym Explainer Accordion/Glossary */}
+      <AITerminologyGlossary />
 
       {/* Primary Ready Reckoner Navigation Bar */}
       <div className="sticky top-[72px] sm:top-[76px] z-30 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl p-1.5 sm:p-2 shadow-2xl">

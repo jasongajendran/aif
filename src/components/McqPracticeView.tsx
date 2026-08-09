@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Question, OptionId } from '../types';
+import { Question, OptionId, NavigationOrigin } from '../types';
 import { 
   CheckCircle2, XCircle, ArrowLeft, ArrowRight, Lightbulb, 
   Eye, EyeOff, Sparkles, Check,
-  ArrowUp, Layers, ListFilter, Grid, ChevronDown, ChevronUp
+  ArrowUp, Layers, ListFilter, Grid, ChevronDown, ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 
 interface McqPracticeViewProps {
@@ -12,6 +13,8 @@ interface McqPracticeViewProps {
   onToggleAlwaysReveal: () => void;
   selectedQuestionId?: number;
   onSelectQuestionId?: (questionId: number) => void;
+  navigationOrigin?: NavigationOrigin | null;
+  onReturnToOrigin?: () => void;
   onOpenVisualizations?: () => void;
   onOpenReadyReckoner?: () => void;
 }
@@ -24,6 +27,8 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   onToggleAlwaysReveal,
   selectedQuestionId: propSelectedQuestionId,
   onSelectQuestionId: propOnSelectQuestionId,
+  navigationOrigin,
+  onReturnToOrigin,
   onOpenVisualizations,
   onOpenReadyReckoner,
 }) => {
@@ -151,6 +156,33 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   return (
     <div className="w-full px-2 sm:px-4 lg:px-6 py-4 space-y-4 relative">
       
+      {/* Return to Origin Banner (Shown when navigated from a Visualizer or Ready Reckoner) */}
+      {navigationOrigin && onReturnToOrigin && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border-2 border-amber-500/50 rounded-2xl p-3.5 sm:p-4 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/20 shrink-0">
+              <ArrowLeft className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400">
+                Direct Practice Link from {navigationOrigin.view === 'visualizations' ? 'Concept Visualizer' : 'Ready Reckoner'}
+              </div>
+              <div className="text-sm sm:text-base font-bold text-white truncate">
+                {navigationOrigin.sectionTitle}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onReturnToOrigin}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all shadow-md shadow-amber-500/20 shrink-0 cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to {navigationOrigin.view === 'visualizations' ? 'Visualizer' : 'Ready Reckoner'}</span>
+          </button>
+        </div>
+      )}
+
       {/* 50-Question Tab Navigation Bar */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-3 shadow-lg flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Left: Section Label */}
@@ -282,7 +314,17 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {navigationOrigin && onReturnToOrigin && (
+                <button
+                  onClick={onReturnToOrigin}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center space-x-1.5 transition-all shadow-md shadow-amber-500/20 animate-pulse"
+                  title="Return directly back to the visualizer section where you clicked this question"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to {navigationOrigin.view === 'visualizations' ? 'Visualizer' : 'Ready Reckoner'}</span>
+                </button>
+              )}
               {onOpenVisualizations && (
                 <button
                   onClick={onOpenVisualizations}

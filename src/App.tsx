@@ -5,7 +5,7 @@ import { McqPracticeView } from './components/McqPracticeView';
 import { VisualizationsHub } from './components/visualizations/VisualizationsHub';
 import { ReadyReckonerHub } from './components/reckoner/ReadyReckonerHub';
 import { FloatingNav } from './components/FloatingNav';
-import { ViewMode } from './types';
+import { ViewMode, NavigationOrigin, VisualizationTab, ReckonerTab } from './types';
 
 const STORAGE_KEY_ALWAYS_REVEAL = 'aif_c01_always_reveal_v1';
 const STORAGE_KEY_VIEW_MODE = 'aif_c01_view_mode_v1';
@@ -21,6 +21,11 @@ export default function App() {
   });
 
   const [selectedQuestionId, setSelectedQuestionId] = useState<number>(1);
+  const [navigationOrigin, setNavigationOrigin] = useState<NavigationOrigin | null>(null);
+  const [activeVizTab, setActiveVizTab] = useState<VisualizationTab>('rag-architecture');
+  const [activeVizSubItem, setActiveVizSubItem] = useState<string | undefined>(undefined);
+  const [activeReckonerTab, setActiveReckonerTab] = useState<ReckonerTab>('comparison-tables');
+  const [activeReckonerSubItem, setActiveReckonerSubItem] = useState<string | undefined>(undefined);
 
   const [alwaysRevealAnswers, setAlwaysRevealAnswers] = useState<boolean>(() => {
     try {
@@ -51,10 +56,36 @@ export default function App() {
     setAlwaysRevealAnswers((prev) => !prev);
   };
 
-  const handleSelectQuestionFromVisualizer = (questionId: number) => {
+  const handleSelectQuestionFromVisualizer = (questionId: number, origin?: NavigationOrigin) => {
     setSelectedQuestionId(questionId);
+    if (origin) {
+      setNavigationOrigin(origin);
+      if (origin.view === 'visualizations' && origin.tabId) {
+        setActiveVizTab(origin.tabId as VisualizationTab);
+        setActiveVizSubItem(origin.subItemId);
+      } else if (origin.view === 'ready-reckoner' && origin.tabId) {
+        setActiveReckonerTab(origin.tabId as ReckonerTab);
+        setActiveReckonerSubItem(origin.subItemId);
+      }
+    }
     setCurrentView('practice');
     window.scrollTo({ top: 120, behavior: 'smooth' });
+  };
+
+  const handleReturnToOrigin = () => {
+    if (navigationOrigin) {
+      const origin = navigationOrigin;
+      setCurrentView(origin.view);
+      if (origin.view === 'visualizations' && origin.tabId) {
+        setActiveVizTab(origin.tabId as VisualizationTab);
+        setActiveVizSubItem(origin.subItemId);
+      } else if (origin.view === 'ready-reckoner' && origin.tabId) {
+        setActiveReckonerTab(origin.tabId as ReckonerTab);
+        setActiveReckonerSubItem(origin.subItemId);
+      }
+      setNavigationOrigin(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -81,6 +112,8 @@ export default function App() {
             onToggleAlwaysReveal={handleToggleAlwaysReveal}
             selectedQuestionId={selectedQuestionId}
             onSelectQuestionId={(id) => setSelectedQuestionId(id)}
+            navigationOrigin={navigationOrigin}
+            onReturnToOrigin={handleReturnToOrigin}
             onOpenVisualizations={() => {
               setCurrentView('visualizations');
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -94,6 +127,8 @@ export default function App() {
           <VisualizationsHub
             questions={questions}
             onSelectQuestion={handleSelectQuestionFromVisualizer}
+            defaultTab={activeVizTab}
+            initialSubItemId={activeVizSubItem}
             onOpenReadyReckoner={() => {
               setCurrentView('ready-reckoner');
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -107,6 +142,8 @@ export default function App() {
           <ReadyReckonerHub
             questions={questions}
             onSelectQuestion={handleSelectQuestionFromVisualizer}
+            initialTab={activeReckonerTab}
+            initialSubItemId={activeReckonerSubItem}
             onOpenVisualizations={() => {
               setCurrentView('visualizations');
               window.scrollTo({ top: 0, behavior: 'smooth' });
