@@ -1384,6 +1384,7 @@ export const domainOverviews: DomainOverview[] = [
     weight: '20% of Exam (~13 Questions)',
     coreConcepts: [
       'Supervised vs. Unsupervised vs. Reinforcement Learning (RL)',
+      'Model Weights (w) vs. Biases (b) vs. Hyperparameters (Internal learned multipliers vs human-tuned knobs)',
       'Underfitting (High Bias) vs. Overfitting (High Variance)',
       'Train / Validation / Test data split rules (e.g. 70/15/15)',
       'Evaluation Metrics: Accuracy, Precision, Recall (Sensitivity), F1 Score, ROC-AUC (Receiver Operating Characteristic - Area Under Curve), RMSE (Root Mean Squared Error), MAE (Mean Absolute Error)',
@@ -1393,6 +1394,7 @@ export const domainOverviews: DomainOverview[] = [
     topExamPatterns: [
       'Scenario with imbalanced dataset -> Choose F1-score over Accuracy',
       'Scenario where missing fraud is critical -> Maximize Recall (Sensitivity)',
+      'Weights are learned parameters adjusted automatically via backpropagation; Hyperparameters (e.g. Learning Rate) are set before training',
       'Scenario where training loss is low but validation loss is high -> Overfitting (Apply L1/L2 regularization, dropout, or early stopping)'
     ],
     keyServices: ['Amazon SageMaker Autopilot (AutoML)', 'Amazon SageMaker Data Wrangler', 'Amazon SageMaker Feature Store']
@@ -1402,6 +1404,7 @@ export const domainOverviews: DomainOverview[] = [
     name: 'Domain 2: Fundamentals of Generative AI',
     weight: '24% of Exam (~16 Questions)',
     coreConcepts: [
+      'Model Customization Weight Spectrum: Prompting (100% Frozen) ➔ RAG (100% Frozen) ➔ PEFT/LoRA (Adapters ~1%) ➔ Fine-Tuning (Updated 100%)',
       'Transformer Architecture: Self-Attention Mechanism, Encoders (BERT [Bidirectional Encoder Representations from Transformers]) vs Decoders (GPT / Claude)',
       'Tokens vs Words (~100 tokens = 75 words / ~0.75 words per token)',
       'Inference Parameters: Temperature (Randomness), Top-P (Nucleus Sampling), Top-K (Candidate Pool), Max Tokens, Stop Sequences',
@@ -1411,6 +1414,7 @@ export const domainOverviews: DomainOverview[] = [
     ],
     topExamPatterns: [
       'Need deterministic factual output -> Set Temperature to 0.0',
+      'Customizing FM with private company docs without retraining weights -> Amazon Bedrock Knowledge Bases (RAG)',
       'Multi-step math problem fails -> Apply Chain-of-Thought (CoT) prompting',
       'Summarization accuracy evaluation -> ROUGE-L (Longest Common Subsequence [LCS]) metric'
     ],

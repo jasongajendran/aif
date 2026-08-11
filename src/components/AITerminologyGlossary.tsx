@@ -181,6 +181,22 @@ export const AI_TERMS_DICTIONARY: TermDefinition[] = [
     ]
   },
   {
+    id: 'model-weights-parameters',
+    term: 'Model Weights, Biases & Parameters',
+    abbreviation: 'Model Weights (w)',
+    fullExpansion: 'Neural Network Weights (w), Biases (b) & Parameters',
+    category: 'ml-weights-training',
+    plainEnglishExplanation: 'Model weights are the billions of internal mathematical coefficients (numbers) stored in neural network layers. When input data or prompts enter the model, they are multiplied by these weights (plus biases) to calculate predictions or generate the next word.',
+    analogyOrMetaphor: 'A giant music studio soundboard with billions of microscopic volume slider dials. Inputs (data/prompts) are multiplied by these sliders to produce the final song. In Prompting and RAG, all sliders remain locked (100% frozen). In Fine-Tuning, a GPU training job nudges specific sliders to learn new behavior permanently.',
+    examContext: 'Exam Essential in Domain 1, 2 & 3: Prompt Engineering & RAG leave weights 100% FROZEN (no retraining). PEFT / LoRA keeps base weights frozen and trains small adapter matrices. Fine-Tuning and Continued Pre-training physically update weights.',
+    keyPoints: [
+      'Weights (w): Multipliers representing connection strength, learned automatically via backpropagation.',
+      'Biases (b): Baseline offset added to weighted sums to shift neuron activation thresholds.',
+      'Hyperparameters: External configuration knobs set by humans before training/inference (e.g., Temperature, Learning Rate).',
+      'Weight Status: Prompting = Frozen (0%), RAG = Frozen (0%), PEFT = Adapters (~1%), Fine-Tuning = Updated (100%).'
+    ]
+  },
+  {
     id: 'peft-lora',
     term: 'PEFT & LoRA',
     abbreviation: 'PEFT / LoRA',

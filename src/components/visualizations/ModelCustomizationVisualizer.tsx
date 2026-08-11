@@ -251,15 +251,69 @@ export const ModelCustomizationVisualizer: React.FC<ModelCustomizationVisualizer
                 </h4>
               </div>
               <p className="text-xs text-slate-200 leading-relaxed">
-                <strong>Model Weights</strong> are the billions of internal mathematical numbers (coefficients) stored in the neural network. They represent the AI's permanent memory and determine which word it predicts next.
+                <strong>Model Weights</strong> are the billions of internal mathematical coefficients (numbers) stored in neural network layers. They represent the AI's internal knowledge and determine how strongly one concept connects to another.
               </p>
-              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 space-y-1">
-                <span className="text-cyan-400 font-bold block">🎛️ The Tuning Knob Metaphor:</span>
-                <p className="italic">
-                  Think of weights as billions of microscopic tuning knobs. 
-                  <br />• <strong>Frozen Weights (Prompting & RAG):</strong> You leave every knob locked in place and only supply notes or reference sheets.
-                  <br />• <strong>Updating Weights (Fine-Tuning):</strong> You run a GPU training job to physically turn a few knobs so the AI learns a new style or syntax permanently.
+              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 space-y-1.5">
+                <span className="text-cyan-400 font-bold block">🎛️ The Sound Mixing Console Metaphor:</span>
+                <p className="italic leading-relaxed">
+                  Imagine a music studio soundboard with <strong>billions of microscopic volume sliders</strong>. 
+                  Inputs (data/prompts) are multiplied by these sliders to produce the final song (prediction).
                 </p>
+                <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px] not-italic font-mono">
+                  <div className="bg-slate-950/90 p-2 rounded-lg border border-slate-800 text-slate-300">
+                    <span className="text-emerald-400 font-bold block">🔒 100% Frozen Weights:</span>
+                    Prompt Eng & RAG (Sliders stay locked; model references facts in prompt).
+                  </div>
+                  <div className="bg-slate-950/90 p-2 rounded-lg border border-slate-800 text-slate-300">
+                    <span className="text-amber-400 font-bold block">⚙️ Updated Weights:</span>
+                    Fine-Tuning (Sliders physically adjusted via GPU gradient descent).
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Box 3: Weights vs Biases vs Hyperparameters */}
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 lg:col-span-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Sliders className="w-4 h-4 text-purple-400 shrink-0" />
+                  <h4 className="text-sm font-bold text-purple-300">
+                    3. Quick Reference: Weights ($w$) vs. Biases ($b$) vs. Hyperparameters
+                  </h4>
+                </div>
+                <span className="text-[10px] font-mono text-purple-400/80">Domain 1 & 2 Core Distinction</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
+                <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-cyan-300">Model Weights ($w$)</span>
+                    <span className="text-[10px] font-mono bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded">Learned</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    Multipliers that define connection strength between artificial neurons. Learned automatically during training backpropagation.
+                  </p>
+                </div>
+
+                <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-300">Biases ($b$)</span>
+                    <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">Learned</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    Baseline offset added to weighted sums $(\sum w \cdot x + b)$ to shift the neuron activation threshold. Also learned automatically.
+                  </p>
+                </div>
+
+                <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-300">Hyperparameters</span>
+                    <span className="text-[10px] font-mono bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded">Pre-set by Humans</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    External tuning knobs set <em>before</em> training/inference (e.g. Temperature, Top-P, Learning Rate, Batch Size, Epochs).
+                  </p>
+                </div>
               </div>
             </div>
 
