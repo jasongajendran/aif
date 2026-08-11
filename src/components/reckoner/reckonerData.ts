@@ -175,8 +175,8 @@ export const comparisonTables: ComparisonTable[] = [
       },
       {
         feature: 'Amazon Comprehend',
-        values: ['Natural Language Processing (NLP)', 'Entity recognition, sentiment analysis, Personally Identifiable Information (PII) detection/redaction, topic modeling', 'PII redaction, customer reviews sentiment, multi-language NLP', 'Does NOT extract structured layout/tables from PDFs (use Amazon Textract)'],
-        examTip: 'Keyword triggers: Detect PII, customer review sentiment, syntax, entity recognition. Trap: Comprehend does NOT extract layout from PDFs.'
+        values: ['Natural Language Processing (NLP) & Named Entity Recognition (NER)', 'Named Entity Recognition (NER) for Persons/Locations/Dates, sentiment analysis, Personally Identifiable Information (PII) detection/redaction, topic modeling', 'Personally Identifiable Information (PII) redaction, customer reviews sentiment analysis, multi-language NLP', 'Does NOT extract structured layout/tables from PDFs (use Amazon Textract)'],
+        examTip: 'Keyword triggers: Named Entity Recognition (NER), Detect Personally Identifiable Information (PII), customer review sentiment analysis, syntax, entity recognition. Trap: Comprehend does NOT extract layout from PDFs.'
       },
       {
         feature: 'Amazon Rekognition',
@@ -185,13 +185,23 @@ export const comparisonTables: ComparisonTable[] = [
       },
       {
         feature: 'Amazon Transcribe',
-        values: ['Speech-to-Text (Audio to Written Text)', 'Call analytics, custom vocabulary, PII redaction from audio, speaker diarization (who spoke when)', 'Audio recordings, meeting transcripts, contact center calls', 'Does NOT convert text into spoken audio (use Amazon Polly)'],
-        examTip: 'Keyword triggers: Audio speech-to-text, call center analytics, speaker diarization, custom vocabulary.'
+        values: [
+          'Speech-to-Text (Automated Speech Recognition [ASR])',
+          'Call analytics, Custom Vocabularies (teaches technical jargon/brand names), PII audio redaction, Speaker Diarization (automated partitioning of audio to determine "who spoke when" e.g., Agent vs Customer)',
+          'Audio recordings, meeting transcripts, contact center multi-speaker calls',
+          'Does NOT convert text into spoken audio (use Amazon Polly)'
+        ],
+        examTip: 'Keyword triggers: Audio speech-to-text, call center analytics, speaker diarization ("who spoke when"), custom vocabulary for specialized jargon.'
       },
       {
         feature: 'Amazon Polly',
-        values: ['Text-to-Speech (Written Text to Audio)', 'Neural & Standard voices, Speech Synthesis Markup Language (SSML) tags, custom pronunciation lexicons, speech marks', 'Voiceover, talking avatars, reading articles aloud', 'Does NOT transcribe audio to text (use Amazon Transcribe)'],
-        examTip: 'Keyword triggers: Text-to-speech, SSML tags, Neural voice, custom lexicons. Trap: Transcribe = Audio->Text, Polly = Text->Audio.'
+        values: [
+          'Text-to-Speech (TTS [Written Text to Audio])',
+          'Neural & Standard voices, Speech Synthesis Markup Language (SSML tags for pauses, whispering, prosody, and phonemes), custom Pronunciation Lexicons (PLS format for brand names), speech marks',
+          'Voiceover, talking avatars, reading articles aloud, accessibility audio',
+          'Does NOT transcribe audio to text (use Amazon Transcribe)'
+        ],
+        examTip: 'Keyword triggers: Text-to-speech, Speech Synthesis Markup Language (SSML tags like <break>, <phoneme>, <whisper>), Neural voice, custom pronunciation lexicons. Trap: Transcribe = Audio->Text, Polly = Text->Audio.'
       },
       {
         feature: 'Amazon Lex',
@@ -209,7 +219,7 @@ export const comparisonTables: ComparisonTable[] = [
         examTip: 'Keyword triggers: Turnkey workplace generative AI assistant respecting source ACL permissions across 40+ enterprise data sources.'
       }
     ],
-    keyTakeaway: 'Transcribe = Audio to Text; Polly = Text to Audio; Textract = Document extraction; Comprehend = Text NLP/PII; Rekognition = Vision; Lex = Bot Dialogues.'
+    keyTakeaway: 'Amazon Transcribe = Speech-to-Text (ASR); Amazon Polly = Text-to-Speech (TTS); Amazon Textract = Document extraction & Optical Character Recognition (OCR); Amazon Comprehend = Text Natural Language Processing (NLP) & Named Entity Recognition (NER) / PII; Amazon Rekognition = Computer Vision; Amazon Lex = Chatbot Dialogues.'
   },
   {
     id: 'sagemaker-governance-matrix',
@@ -217,7 +227,7 @@ export const comparisonTables: ComparisonTable[] = [
     category: 'governance',
     badge: 'Domain 4 & 5',
     description: 'Differentiates the 5 major SageMaker governance services.',
-    columns: ['Tool / Service', 'Primary Function', 'Phase of ML Lifecycle', 'Key Deliverables / Metrics', 'Exam Traps to Avoid'],
+    columns: ['Tool / Service', 'Primary Function', 'Phase of Machine Learning (ML) Lifecycle', 'Key Deliverables / Metrics', 'Exam Traps to Avoid'],
     rows: [
       {
         feature: 'SageMaker Model Cards',
@@ -226,13 +236,13 @@ export const comparisonTables: ComparisonTable[] = [
       },
       {
         feature: 'AWS AI Service Cards',
-        values: ['AWS-published transparency cards for AWS pre-trained AI services (e.g. Rekognition, Comprehend, Textract)', 'Pre-deployment evaluation of AWS services', 'AWS documentation detailing intended use cases, limitations, and fairness testing by AWS', 'Trap: Created by AWS, NOT customizable by users for their own internal models'],
-        examTip: 'Exam Trap: Created by AWS for AWS pre-built services (Rekognition, Textract). NOT customizable by customers for their own models!'
+        values: ['AWS-published transparency cards for AWS pre-trained AI services (e.g. Amazon Rekognition, Amazon Comprehend, Amazon Textract)', 'Pre-deployment evaluation of AWS services', 'AWS documentation detailing intended use cases, limitations, and fairness testing by AWS', 'Trap: Created by AWS, NOT customizable by users for their own internal models'],
+        examTip: 'Exam Trap: Created by AWS for AWS pre-built services (Amazon Rekognition, Amazon Textract). NOT customizable by customers for their own models!'
       },
       {
         feature: 'SageMaker Clarify',
-        values: ['Detecting bias in training data and trained models, and computing SHAP feature importance for explainability', 'Pre-Training (data bias) and Post-Training (model bias & explainability)', 'Class Imbalance (CI), Difference in Positive Proportions (DPL), SHAP values, Disparate Impact', 'Trap: Clarify detects bias & provides explanations; it does NOT automatically rebalance data'],
-        examTip: 'Pre-training data bias (CI, DPL) + Post-training model bias (DPPL, DI) + SHAP explainability. Trap: Clarify identifies bias; it does not clean data.'
+        values: ['Detecting bias in training data and trained models, and computing Shapley Additive exPlanations (SHAP) feature importance for explainability', 'Pre-Training (data bias) and Post-Training (model bias & explainability)', 'Class Imbalance (CI), Difference in Positive Proportions in Labels (DPL), Shapley Additive exPlanations (SHAP) values, Disparate Impact (DI)', 'Trap: Clarify detects bias & provides explanations; it does NOT automatically rebalance data'],
+        examTip: 'Pre-training data bias (Class Imbalance [CI], Difference in Positive Proportions in Labels [DPL]) + Post-training model bias (DPPL, Disparate Impact [DI]) + SHAP explainability. Trap: Clarify identifies bias; it does not clean data.'
       },
       {
         feature: 'SageMaker Model Monitor',
@@ -241,54 +251,54 @@ export const comparisonTables: ComparisonTable[] = [
       },
       {
         feature: 'SageMaker Model Registry',
-        values: ['Cataloging, versioning, approving, and auditing models for production promotion', 'Pre-Deployment & CI/CD Pipeline', 'Model versions, approval status (Approved/Rejected), deployment artifacts', 'Trap: It manages metadata and deployment approvals, not dataset labeling'],
+        values: ['Cataloging, versioning, approving, and auditing models for production promotion', 'Pre-Deployment & Continuous Integration / Continuous Deployment (CI/CD) Pipeline', 'Model versions, approval status (Approved/Rejected), deployment artifacts', 'Trap: It manages metadata and deployment approvals, not dataset labeling'],
         examTip: 'Model version catalog, approval workflows (Pending/Approved/Rejected), and CI/CD deployment tracking.'
       },
       {
         feature: 'Bedrock Guardrails',
-        values: ['Real-time filtering of user prompts and model responses for PII, hate speech, denied topics, hallucinations', 'Runtime Inference (Generative AI)', 'Denied topics, content filters (Hate/Insults/Sexual/Violence), PII masking, Grounding Check', 'Trap: Applies to Bedrock Foundation Models at inference, not classical ML training algorithms'],
-        examTip: 'Runtime safety filters for Bedrock LLMs: PII masking, denied topics, toxic content, and hallucination grounding checks.'
+        values: ['Real-time filtering of user prompts and model responses for Personally Identifiable Information (PII), hate speech, denied topics, hallucinations', 'Runtime Inference (Generative AI)', 'Denied topics, content filters (Hate/Insults/Sexual/Violence), PII masking, Grounding Check', 'Trap: Applies to Bedrock Foundation Models (FMs) at inference, not classical ML training algorithms'],
+        examTip: 'Runtime safety filters for Bedrock Large Language Models (LLMs): PII masking, denied topics, toxic content, and hallucination grounding checks.'
       }
     ],
-    keyTakeaway: 'AI Service Cards = AWS Pre-built; Model Cards = Your custom models; Clarify = Bias & SHAP; Model Monitor = Production Drift; Bedrock Guardrails = GenAI Runtime Safety.'
+    keyTakeaway: 'AWS AI Service Cards = AWS Pre-built; SageMaker Model Cards = Your custom models; SageMaker Clarify = Bias & Shapley Additive exPlanations (SHAP); SageMaker Model Monitor = Production Drift; Amazon Bedrock Guardrails = Generative AI Runtime Safety.'
   },
   {
     id: 'evaluation-metrics-matrix',
-    title: 'Evaluation Metrics: Classical ML vs. Generative AI',
+    title: 'Evaluation Metrics: Classical Machine Learning (ML) vs. Generative AI',
     category: 'metrics',
     badge: 'Domain 1 & 2 Math',
     description: 'Quick formula and application guide for all exam evaluation questions.',
     columns: ['Metric', 'Formula / Concept', 'When to Prioritize', 'Real-World Example', 'Exam Scenario Clue'],
     rows: [
       {
-        feature: 'Recall (Sensitivity)',
-        values: ['TP / (TP + FN)', 'When False Negatives (FN) are dangerous / unacceptable', 'Cancer detection, fraud detection, security breaches', 'Must catch all instances of defect or disease; false alarms are acceptable'],
+        feature: 'Recall (Sensitivity / True Positive Rate)',
+        values: ['True Positives / (True Positives + False Negatives) [TP / (TP + FN)]', 'When False Negatives (FN) are dangerous / unacceptable (Missing a true disease or fraud)', 'Cancer detection, fraud detection, security threat breaches', 'Must catch all instances of defect or disease; false alarms are acceptable'],
         examTip: 'Formula: TP/(TP+FN). Prioritize when missing a positive case (False Negative) has severe consequences (e.g. Cancer, Fraud).'
       },
       {
-        feature: 'Precision (Specificity/PPV)',
-        values: ['TP / (TP + FP)', 'When False Positives (FP) are costly / disruptive', 'Spam email filter, video recommendation, automatic loan charge', 'Cannot annoy user with false alarms or block innocent users'],
+        feature: 'Precision (Positive Predictive Value [PPV])',
+        values: ['True Positives / (True Positives + False Positives) [TP / (TP + FP)]', 'When False Positives (FP) are costly / disruptive (False alarms)', 'Spam email filter, video recommendation, automatic bank account charge', 'Cannot annoy user with false alarms or block innocent users'],
         examTip: 'Formula: TP/(TP+FP). Prioritize when False Positives are costly or disruptive (e.g. Spam filters, user-facing recommendations).'
       },
       {
-        feature: 'F1 Score',
+        feature: 'F1 Score (Balanced Harmonic Mean)',
         values: ['2 * (Precision * Recall) / (Precision + Recall)', 'Imbalanced datasets where both precision and recall matter', 'Fraud detection with 99.9% non-fraud and 0.1% fraud data', 'Accuracy is misleading due to high class imbalance'],
         examTip: 'Harmonic mean of Precision & Recall: 2*(P*R)/(P+R). Essential metric when evaluating severe class imbalance datasets.'
       },
       {
-        feature: 'ROUGE-1 / ROUGE-2 / ROUGE-L',
-        values: ['Overlap of unigrams, bigrams, and Longest Common Subsequence between generated & reference text', 'Summarization tasks & text generation overlap', 'Evaluating Amazon Bedrock summarization output against gold standard summary', 'Summary evaluation, n-gram recall and precision'],
+        feature: 'ROUGE-1 / ROUGE-2 / ROUGE-L (Recall-Oriented Understudy for Gisting Evaluation)',
+        values: ['Overlap of unigrams (single words), bigrams (word pairs), and Longest Common Subsequence (LCS) between generated & reference text', 'Summarization tasks & text generation overlap', 'Evaluating Amazon Bedrock summarization output against gold standard summary', 'Summary evaluation, n-gram recall and precision'],
         examTip: 'Measures n-gram overlap & longest common subsequence. Gold standard metric for evaluating Bedrock text summarization quality.'
       },
       {
-        feature: 'BLEU',
+        feature: 'BLEU (Bilingual Evaluation Understudy)',
         values: ['N-gram precision between machine translation and human reference translations (with brevity penalty)', 'Machine Translation (e.g. English to German)', 'Amazon Translate quality assessment against professional translators', 'Exact word n-gram matching in translation'],
         examTip: 'N-gram precision with brevity penalty. Primary metric for evaluating Machine Translation (Amazon Translate quality).'
       },
       {
-        feature: 'BERTScore',
-        values: ['Semantic similarity using contextual embeddings rather than exact string matching', 'Paraphrasing and conceptual accuracy where words differ but meaning is identical', 'Evaluating RAG answers where synonyms are used correctly', 'Semantic preservation without requiring exact wording'],
-        examTip: 'Semantic embedding similarity. Best for RAG & paraphrase evaluation where wording differs but meaning is identical.'
+        feature: 'BERTScore (Bidirectional Encoder Representations from Transformers Score)',
+        values: ['Semantic similarity using contextual vector embeddings rather than exact string matching', 'Paraphrasing and conceptual accuracy where words differ but meaning is identical', 'Evaluating Retrieval-Augmented Generation (RAG) answers where synonyms are used correctly', 'Semantic preservation without requiring exact wording'],
+        examTip: 'Semantic embedding similarity. Best for Retrieval-Augmented Generation (RAG) & paraphrase evaluation where wording differs but meaning is identical.'
       },
       {
         feature: 'Perplexity (PPL)',
@@ -308,7 +318,7 @@ export const comparisonTables: ComparisonTable[] = [
     rows: [
       {
         feature: 'Class Imbalance (CI)',
-        values: ['Pre-training', 'Close to 0 ([-1, 1])', 'Measures difference in sample sizes between sensitive facet (a) and non-sensitive facet (d)', 'Resample data, SMOTE, collect more samples for underrepresented group'],
+        values: ['Pre-training', 'Close to 0 ([-1, 1])', 'Measures difference in sample sizes between sensitive facet (a) and non-sensitive facet (d)', 'Resample data, Synthetic Minority Over-sampling Technique (SMOTE), collect more samples for underrepresented group'],
         examTip: 'Pre-training metric. Measures imbalance in sample counts between protected and unprotected groups. Target value: close to 0.'
       },
       {
@@ -327,16 +337,16 @@ export const comparisonTables: ComparisonTable[] = [
         examTip: 'Post-training metric. Selection rate ratio: Sensitive / Unconstrained. Target: close to 1.0 (80% rule: 0.8 to 1.25).'
       },
       {
-        feature: 'SHAP (KernelSHAP / TreeSHAP)',
+        feature: 'Shapley Additive exPlanations (SHAP [KernelSHAP / TreeSHAP])',
         values: ['Explainability', 'Feature attribution values', 'Calculates marginal contribution of each feature to the final prediction (Local & Global)', 'Identify discriminatory features acting as indirect proxies'],
         examTip: 'Explainability game-theory metric. Quantifies each feature marginal contribution to predictions to identify proxy bias.'
       }
     ],
-    keyTakeaway: 'CI & DPL = Pre-training data checks; DPPL & DI = Post-training prediction checks; SHAP = Feature attribution & explainability.'
+    keyTakeaway: 'Class Imbalance (CI) & Difference in Positive Proportions in Labels (DPL) = Pre-training data checks; DPPL & Disparate Impact (DI) = Post-training prediction checks; Shapley Additive exPlanations (SHAP) = Feature attribution & explainability.'
   },
   {
     id: 'storage-vector-databases-matrix',
-    title: 'AWS Vector Storage & Databases Comparison (RAG)',
+    title: 'AWS Vector Storage & Databases Comparison (Retrieval-Augmented Generation [RAG])',
     category: 'core-services',
     badge: 'Vector Storage (Domain 3)',
     description: 'Detailed architectural comparison of AWS vector stores used with Amazon Bedrock Knowledge Bases.',
@@ -349,7 +359,7 @@ export const comparisonTables: ComparisonTable[] = [
       },
       {
         feature: 'Amazon Aurora PostgreSQL (pgvector)',
-        values: ['Managed Relational DB (Provisioned or Serverless v2)', 'Workloads combining structured relational data with vector embeddings in the same SQL DB', 'ACID compliance, SQL queries, enterprise DB features, requires DB provisioning and maintenance'],
+        values: ['Managed Relational Database (DB) [Provisioned or Serverless v2]', 'Workloads combining structured relational data with vector embeddings in the same SQL DB', 'Atomicity, Consistency, Isolation, Durability (ACID) compliance, SQL queries, enterprise DB features, requires DB provisioning and maintenance'],
         examTip: 'Choose when enterprise already uses Aurora PostgreSQL and wants vector similarity alongside relational tables in standard SQL.'
       },
       {
@@ -359,7 +369,7 @@ export const comparisonTables: ComparisonTable[] = [
       },
       {
         feature: 'Amazon DocumentDB (with vector search)',
-        values: ['Managed MongoDB-compatible Document DB', 'JSON document workloads requiring semantic search over JSON schemas', 'Native JSON document storage + vector embeddings, ideal for MongoDB migrations'],
+        values: ['Managed MongoDB-compatible Document Database', 'JSON document workloads requiring semantic search over JSON schemas', 'Native JSON document storage + vector embeddings, ideal for MongoDB migrations'],
         examTip: 'Choose for MongoDB/JSON document-centric architectures adding vector search capability.'
       },
       {
@@ -368,7 +378,7 @@ export const comparisonTables: ComparisonTable[] = [
         examTip: 'Supported external vector databases in Bedrock Knowledge Bases via AWS Secrets Manager & API keys.'
       }
     ],
-    keyTakeaway: 'OpenSearch Serverless = Default Bedrock RAG vector store; Aurora pgvector = SQL + Vectors; Neptune Analytics = Graph-RAG; DocumentDB = JSON + Vectors.'
+    keyTakeaway: 'Amazon OpenSearch Serverless = Default Bedrock RAG vector store; Amazon Aurora pgvector = SQL + Vectors; Amazon Neptune Analytics = Graph-RAG; Amazon DocumentDB = JSON + Vectors.'
   },
   {
     id: 'security-compliance-matrix',
@@ -380,31 +390,31 @@ export const comparisonTables: ComparisonTable[] = [
     rows: [
       {
         feature: 'Amazon Bedrock Guardrails',
-        values: ['Runtime Inference (Prompt & Output)', 'PII redaction, prompt injection attacks, denied business topics, toxic content', 'Real-time safety firewall applied across all Bedrock foundation models with configurable sensitivity thresholds'],
-        examTip: 'The #1 answer for masking PII (credit cards/SSN), blocking harmful topics, and filtering prompt injection in Bedrock.'
+        values: ['Runtime Inference (Prompt & Output)', 'Personally Identifiable Information (PII) redaction, prompt injection attacks, denied business topics, toxic content', 'Real-time safety firewall applied across all Bedrock foundation models with configurable sensitivity thresholds'],
+        examTip: 'The #1 answer for masking Personally Identifiable Information (PII) [credit cards/SSN], blocking harmful topics, and filtering prompt injection in Bedrock.'
       },
       {
-        feature: 'AWS PrivateLink / VPC Interface Endpoints',
+        feature: 'AWS PrivateLink / Virtual Private Cloud (VPC) Interface Endpoints',
         values: ['Network Transport Layer', 'Data traversing public internet; compliance with HIPAA/PCI-DSS', 'Keeps all Bedrock and SageMaker API calls securely inside your private VPC without internet gateways'],
         examTip: 'Ensures API traffic to Bedrock/SageMaker never leaves the private AWS network backbone.'
       },
       {
-        feature: 'AWS KMS (Customer Managed Keys - CMK)',
-        values: ['Data at Rest Encryption', 'Unauthorized access to fine-tuned model artifacts and S3 vector embeddings', 'Enables envelope encryption using customer-controlled keys for Bedrock custom models and Knowledge Bases'],
+        feature: 'AWS Key Management Service (AWS KMS) [Customer Managed Keys - CMK]',
+        values: ['Data at Rest Encryption', 'Unauthorized access to fine-tuned model artifacts and Amazon S3 vector embeddings', 'Enables envelope encryption using customer-controlled keys for Bedrock custom models and Knowledge Bases'],
         examTip: 'Required when compliance dictates customer full control over key rotation and cryptographic access policies.'
       },
       {
         feature: 'AWS CloudTrail',
-        values: ['API Auditing & Governance', 'Unauthorized model invocations, lack of compliance audit trails', 'Logs all management (control plane) and data plane API calls (InvokeModel, CreateAgent) with caller IAM identity'],
+        values: ['Application Programming Interface (API) Auditing & Governance', 'Unauthorized model invocations, lack of compliance audit trails', 'Logs all management (control plane) and data plane API calls (InvokeModel, CreateAgent) with caller Identity and Access Management (IAM) identity'],
         examTip: 'Answers: "Who invoked which Bedrock model and at what time?" for regulatory audit requirements.'
       },
       {
         feature: 'Amazon Macie',
-        values: ['Data Ingestion Discovery & S3 Security', 'Unintended PII stored in raw S3 training or RAG data buckets', 'Uses pattern matching and ML to discover, classify, and alert on sensitive PII stored in S3 data sources'],
+        values: ['Data Ingestion Discovery & S3 Security', 'Unintended Personally Identifiable Information (PII) stored in raw Amazon S3 training or RAG data buckets', 'Uses pattern matching and Machine Learning (ML) to discover, classify, and alert on sensitive PII stored in S3 data sources'],
         examTip: 'Discovers and flags unencrypted sensitive PII sitting in S3 buckets BEFORE ingesting into Bedrock Knowledge Bases.'
       }
     ],
-    keyTakeaway: 'Bedrock Guardrails = Runtime prompt/output safety; PrivateLink = Private network; KMS = Encryption at rest; CloudTrail = API audit trail; Macie = S3 PII discovery.'
+    keyTakeaway: 'Amazon Bedrock Guardrails = Runtime prompt/output safety; AWS PrivateLink = Private Virtual Private Cloud (VPC) network; AWS Key Management Service (KMS) = Encryption at rest; AWS CloudTrail = API audit trail; Amazon Macie = Amazon S3 Personally Identifiable Information (PII) discovery.'
   }
 ];
 
@@ -423,17 +433,17 @@ export const logicFlows: LogicFlow[] = [
         question: 'What type of task is your application trying to solve?',
         options: [
           {
-            label: 'Ready-made cognitive task (OCR, Vision, Audio Transcription, Translation, PII Redaction)',
-            description: 'Standard vision, speech, document, or NLP task with no custom generative creativity needed.',
+            label: 'Ready-made cognitive task (Optical Character Recognition [OCR], Computer Vision, Audio Transcription [ASR], Translation, PII [Personally Identifiable Information] Redaction)',
+            description: 'Standard vision, speech, document, or NLP [Natural Language Processing] task with no custom generative creativity needed.',
             nextNodeId: 'node_prebuilt_branch'
           },
           {
-            label: 'Generative AI (Text generation, Chat, Summarization, Code, Multimodal LLM)',
-            description: 'Leveraging Foundation Models (LLMs) with natural language prompts or proprietary docs.',
+            label: 'Generative AI (Text generation, Chat, Summarization, Code, Multimodal LLM [Large Language Model])',
+            description: 'Leveraging Foundation Models (FMs / LLMs) with natural language prompts or proprietary docs.',
             nextNodeId: 'node_genai_branch'
           },
           {
-            label: 'Custom Machine Learning (Predictive models, tabular tabular data, custom algorithms, custom training)',
+            label: 'Custom Machine Learning (Predictive models, tabular data, custom algorithms, custom training)',
             description: 'Building, training, and deploying custom models with full infrastructure control.',
             nextNodeId: 'node_sagemaker_branch'
           }
@@ -446,41 +456,41 @@ export const logicFlows: LogicFlow[] = [
         options: [
           {
             label: 'Extract tables, forms, or key-value pairs from PDFs/receipts',
-            description: 'Structured OCR from complex documents.',
+            description: 'Structured Optical Character Recognition (OCR) from complex documents.',
             recommendation: {
               service: 'Amazon Textract',
-              reason: 'Textract handles structured document extraction, tables, forms, and custom queries beyond basic OCR.',
+              reason: 'Textract handles structured document extraction, tables, forms, and custom queries beyond basic Optical Character Recognition (OCR).',
               examTip: 'Exam trigger: "extract tables from invoices" -> Amazon Textract AnalyzeDocument.',
               targetQuestionIds: [12, 45, 108]
             }
           },
           {
-            label: 'Detect PII, sentiment, or redact sensitive entities in text',
-            description: 'Analyzing text documents or customer tickets for compliance & sentiment.',
+            label: 'Detect PII (Personally Identifiable Information), sentiment, or redact sensitive entities in text',
+            description: 'Analyzing text documents or customer tickets for compliance & sentiment using Named Entity Recognition (NER).',
             recommendation: {
               service: 'Amazon Comprehend',
-              reason: 'Comprehend provides turnkey sentiment analysis, entity extraction, and automated PII redaction.',
+              reason: 'Comprehend provides turnkey sentiment analysis, Named Entity Recognition (NER), and automated Personally Identifiable Information (PII) redaction.',
               examTip: 'Exam trigger: "redact PII from customer complaints without ML models" -> Amazon Comprehend.',
               targetQuestionIds: [15, 62, 140]
             }
           },
           {
-            label: 'Audio transcription / speech to text for contact centers',
-            description: 'Transcribing customer calls with speaker identification.',
+            label: 'Audio transcription / speech to text for contact centers (Automated Speech Recognition [ASR])',
+            description: 'Transcribing customer calls with speaker diarization (separating "who spoke when" e.g., Agent vs Customer).',
             recommendation: {
               service: 'Amazon Transcribe',
-              reason: 'Transcribe provides speech-to-text, call analytics, custom vocabularies, and speaker diarization.',
-              examTip: 'Exam trigger: "transcribe customer phone recordings" -> Amazon Transcribe.',
+              reason: 'Transcribe provides speech-to-text (ASR [Automated Speech Recognition]), call analytics, custom vocabularies (technical terms/acronyms), and speaker diarization (identifying who spoke when in multi-speaker audio).',
+              examTip: 'Exam trigger: "transcribe customer phone recordings with speaker identification" -> Amazon Transcribe with Speaker Diarization.',
               targetQuestionIds: [22, 88]
             }
           },
           {
-            label: 'Convert written text into natural human speech',
-            description: 'Generating voiceovers or interactive audio playback.',
+            label: 'Convert written text into natural human speech (Text-to-Speech [TTS])',
+            description: 'Generating voiceovers or interactive audio playback with customized pauses and emotion.',
             recommendation: {
               service: 'Amazon Polly',
-              reason: 'Polly converts text into lifelike speech using Neural TTS and SSML pronunciation tags.',
-              examTip: 'Exam trigger: "generate audio voiceover for training materials" -> Amazon Polly.',
+              reason: 'Polly converts text into lifelike speech using Neural Text-to-Speech (TTS), Speech Synthesis Markup Language (SSML tags for pauses, whispering, and phonemes), and custom Pronunciation Lexicons (PLS format for brand names).',
+              examTip: 'Exam trigger: "generate audio voiceover with custom pauses or whispering" -> Amazon Polly with Speech Synthesis Markup Language (SSML tags such as <break>, <phoneme>, <whisper>).',
               targetQuestionIds: [30, 95]
             }
           }
@@ -489,14 +499,14 @@ export const logicFlows: LogicFlow[] = [
       node_genai_branch: {
         id: 'node_genai_branch',
         title: 'Step 2: Foundation Model Strategy',
-        question: 'How do you want to access and customize the Foundation Model?',
+        question: 'How do you want to access and customize the Foundation Model (FM)?',
         options: [
           {
             label: 'Serverless API access to leading models (Claude, Titan, Llama) with Zero Infrastructure',
-            description: 'Standard prompt engineering, Bedrock Guardrails, and managed Knowledge Bases.',
+            description: 'Standard prompt engineering, Bedrock Guardrails, and managed Knowledge Bases (RAG [Retrieval-Augmented Generation]).',
             recommendation: {
               service: 'Amazon Bedrock',
-              reason: 'Amazon Bedrock provides unified serverless API access to top FMs with built-in RAG and Guardrails.',
+              reason: 'Amazon Bedrock provides unified serverless API access to top Foundation Models (FMs) with built-in RAG (Retrieval-Augmented Generation) and Guardrails.',
               examTip: 'Exam trigger: "serverless access to FMs with minimal operational overhead" -> Amazon Bedrock.',
               targetQuestionIds: [1, 5, 20, 50]
             }
@@ -506,14 +516,14 @@ export const logicFlows: LogicFlow[] = [
             description: 'Employees need a turnkey chat assistant connected to SharePoint, Confluence, S3, and Jira.',
             recommendation: {
               service: 'Amazon Q Business',
-              reason: 'Amazon Q Business provides an out-of-the-box enterprise GenAI assistant with native identity ACL enforcement.',
+              reason: 'Amazon Q Business provides an out-of-the-box enterprise GenAI assistant with native identity ACL (Access Control List) enforcement.',
               examTip: 'Exam trigger: "workplace AI assistant enforcing existing user permissions across 40+ SaaS tools" -> Amazon Q Business.',
               targetQuestionIds: [34, 112]
             }
           },
           {
             label: 'Deploy open-source LLMs (Falcon, Mistral, Hugging Face) on dedicated GPU instances with full container control',
-            description: 'Need custom Docker containers, VPC peering, and customized inference scripts.',
+            description: 'Need custom Docker containers, VPC (Virtual Private Cloud) peering, and customized inference scripts.',
             recommendation: {
               service: 'Amazon SageMaker JumpStart / Endpoints',
               reason: 'SageMaker JumpStart allows deploying open-source and proprietary models onto dedicated SageMaker hosting infrastructure.',
@@ -529,7 +539,7 @@ export const logicFlows: LogicFlow[] = [
         question: 'What specific capability in the custom ML pipeline is required?',
         options: [
           {
-            label: 'Automate model creation for tabular data with zero ML code',
+            label: 'Automate model creation for tabular data with zero ML code (AutoML)',
             description: 'Automatically explore algorithms, feature engineering, and hyperparameter tuning.',
             recommendation: {
               service: 'Amazon SageMaker Autopilot',
@@ -539,11 +549,11 @@ export const logicFlows: LogicFlow[] = [
             }
           },
           {
-            label: 'Audit dataset and model for bias and compute SHAP explainability',
+            label: 'Audit dataset and model for bias and compute SHAP (Shapley Additive exPlanations) explainability',
             description: 'Regulatory requirement to explain feature importance and check demographic parity.',
             recommendation: {
               service: 'Amazon SageMaker Clarify',
-              reason: 'Clarify provides pre-training data bias detection, post-training prediction bias, and SHAP explainability.',
+              reason: 'Clarify provides pre-training data bias detection (CI [Class Imbalance], DPL [Difference in Positive Proportions in Labels]), post-training prediction bias, and SHAP (Shapley Additive exPlanations) explainability.',
               examTip: 'Exam trigger: "explain model predictions / detect pre-training bias" -> SageMaker Clarify.',
               targetQuestionIds: [25, 84, 150]
             }
@@ -1373,56 +1383,58 @@ export const domainOverviews: DomainOverview[] = [
     name: 'Domain 1: Fundamentals of AI and ML',
     weight: '20% of Exam (~13 Questions)',
     coreConcepts: [
-      'Supervised vs. Unsupervised vs. Reinforcement Learning',
+      'Supervised vs. Unsupervised vs. Reinforcement Learning (RL)',
       'Underfitting (High Bias) vs. Overfitting (High Variance)',
-      'Train / Validation / Test data split rules',
-      'Evaluation Metrics: Accuracy, Precision, Recall, F1 Score, ROC-AUC, RMSE, MAE',
-      'Confusion Matrix terms: TP, TN, FP (Type I Error), FN (Type II Error)',
+      'Train / Validation / Test data split rules (e.g. 70/15/15)',
+      'Evaluation Metrics: Accuracy, Precision, Recall (Sensitivity), F1 Score, ROC-AUC (Receiver Operating Characteristic - Area Under Curve), RMSE (Root Mean Squared Error), MAE (Mean Absolute Error)',
+      'Confusion Matrix terms: TP (True Positive), TN (True Negative), FP (False Positive / Type I Error), FN (False Negative / Type II Error)',
       'Feature Engineering & Normalization (StandardScaler, MinMaxScaler, One-Hot Encoding)'
     ],
     topExamPatterns: [
       'Scenario with imbalanced dataset -> Choose F1-score over Accuracy',
-      'Scenario where missing fraud is critical -> Maximize Recall',
+      'Scenario where missing fraud is critical -> Maximize Recall (Sensitivity)',
       'Scenario where training loss is low but validation loss is high -> Overfitting (Apply L1/L2 regularization, dropout, or early stopping)'
     ],
-    keyServices: ['SageMaker Autopilot', 'SageMaker Data Wrangler', 'SageMaker Feature Store']
+    keyServices: ['Amazon SageMaker Autopilot (AutoML)', 'Amazon SageMaker Data Wrangler', 'Amazon SageMaker Feature Store']
   },
   {
     domainId: 2,
     name: 'Domain 2: Fundamentals of Generative AI',
     weight: '24% of Exam (~16 Questions)',
     coreConcepts: [
-      'Transformer Architecture: Self-Attention Mechanism, Encoders (BERT) vs Decoders (GPT/Claude)',
-      'Tokens vs Words (~100 tokens = 75 words)',
-      'Inference Parameters: Temperature, Top-P, Top-K, Max Tokens, Stop Sequences, Frequency/Presence Penalty',
-      'Prompt Engineering Strategies: Zero-Shot, Few-Shot, Chain-of-Thought (CoT), Directional Stimulus, ReAct',
-      'Hallucinations & Context Drift root causes',
-      'GenAI Evaluation: ROUGE (1/2/L), BLEU, BERTScore, Perplexity'
+      'Transformer Architecture: Self-Attention Mechanism, Encoders (BERT [Bidirectional Encoder Representations from Transformers]) vs Decoders (GPT / Claude)',
+      'Tokens vs Words (~100 tokens = 75 words / ~0.75 words per token)',
+      'Inference Parameters: Temperature (Randomness), Top-P (Nucleus Sampling), Top-K (Candidate Pool), Max Tokens, Stop Sequences',
+      'Prompt Engineering Strategies: Zero-Shot, Few-Shot (In-Context Learning), Chain-of-Thought (CoT), Directional Stimulus, ReAct (Reason + Action)',
+      'Hallucinations & Context Drift root causes (Mitigation: RAG [Retrieval-Augmented Generation], Guardrails, Low Temperature)',
+      'GenAI Evaluation: ROUGE (Recall-Oriented Understudy for Gisting Evaluation 1/2/L), BLEU (Bilingual Evaluation Understudy), BERTScore, Perplexity (PPL)'
     ],
     topExamPatterns: [
       'Need deterministic factual output -> Set Temperature to 0.0',
-      'Multi-step math problem fails -> Apply Chain-of-Thought prompting',
-      'Summarization accuracy evaluation -> ROUGE-L metric'
+      'Multi-step math problem fails -> Apply Chain-of-Thought (CoT) prompting',
+      'Summarization accuracy evaluation -> ROUGE-L (Longest Common Subsequence [LCS]) metric'
     ],
-    keyServices: ['Amazon Bedrock', 'Bedrock Playgrounds', 'Titan Text Models']
+    keyServices: ['Amazon Bedrock', 'Amazon Bedrock Playgrounds', 'Amazon Titan Text Models']
   },
   {
     domainId: 3,
     name: 'Domain 3: Applications of Foundation Models',
     weight: '28% of Exam (~18 Questions)',
     coreConcepts: [
-      'Customization Continuum: Prompt Eng -> RAG -> Fine-Tuning -> Continued Pretraining -> From Scratch',
-      'Amazon Bedrock Knowledge Bases Architecture (S3 -> Embedding Model -> Vector Index -> Augmentation)',
-      'Amazon Bedrock Agents (Action Groups, OpenAPI Schema, Lambda invocation, Session Memory)',
-      'Bedrock Provisioned Throughput vs. On-Demand Pricing',
-      'Pre-built AI Services: Comprehend, Textract, Rekognition, Transcribe, Polly, Translate, Lex, Kendra, Q Business',
-      'Vector Databases on AWS: OpenSearch Serverless, Aurora PostgreSQL pgvector, Neptune Analytics'
+      'Customization Continuum: Prompt Engineering -> RAG (Retrieval-Augmented Generation) -> Fine-Tuning (PEFT [Parameter-Efficient Fine-Tuning] / LoRA [Low-Rank Adaptation]) -> Continued Pre-training -> Pre-training from Scratch',
+      'Amazon Bedrock Knowledge Bases Architecture (S3 [Simple Storage Service] -> Embedding Model -> Vector Index -> Grounded Prompt Augmentation)',
+      'Amazon Bedrock Agents (Action Groups, OpenAPI 3.0 Schema, AWS Lambda invocation, Session Memory)',
+      'Bedrock Provisioned Throughput (Dedicated Model Units [MUs]) vs. On-Demand Serverless Pricing',
+      'Pre-built AI Services: Comprehend (NLP/NER [Named Entity Recognition] & PII), Textract (OCR [Optical Character Recognition] Tables/Forms), Rekognition (Computer Vision), Transcribe (ASR [Automated Speech Recognition], Speaker Diarization ["Who spoke when"], Custom Vocabularies), Polly (TTS [Text-to-Speech], SSML [Speech Synthesis Markup Language], Custom Lexicons), Translate, Lex (Chatbot NLU), Kendra, Q Business',
+      'Vector Databases on AWS: Amazon OpenSearch Serverless, Amazon Aurora PostgreSQL pgvector, Amazon Neptune Analytics'
     ],
     topExamPatterns: [
-      'Frequently updating private company documentation -> Amazon Bedrock Knowledge Bases (RAG)',
+      'Frequently updating private company documentation -> Amazon Bedrock Knowledge Bases (RAG [Retrieval-Augmented Generation])',
       'Extracting tables and key-value forms from invoices -> Amazon Textract AnalyzeDocument',
-      'Workplace assistant with enterprise ACLs -> Amazon Q Business',
-      'Guaranteed TPS and sub-second latency under high load -> Bedrock Provisioned Throughput'
+      'Contact center audio with speaker separation -> Amazon Transcribe with Speaker Diarization ("Who spoke when")',
+      'Synthesizing speech with custom pauses/whispering -> Amazon Polly with Speech Synthesis Markup Language (SSML tags such as <break>, <phoneme>, <whisper>)',
+      'Workplace assistant with enterprise ACLs (Access Control Lists) -> Amazon Q Business',
+      'Guaranteed TPS (Transactions Per Second) and sub-second latency under high load -> Bedrock Provisioned Throughput'
     ],
     keyServices: ['Amazon Bedrock', 'Bedrock Knowledge Bases', 'Amazon Q Business', 'Amazon Textract', 'Amazon Comprehend']
   },
@@ -1433,35 +1445,35 @@ export const domainOverviews: DomainOverview[] = [
     coreConcepts: [
       'Six Dimensions of Responsible AI: Fairness, Explainability, Privacy & Security, Transparency, Robustness, Governance',
       'Types of Bias: Historical bias, Representation bias, Measurement bias, Evaluation bias',
-      'SageMaker Clarify Metrics: Class Imbalance (CI), DPL, DPPL, Disparate Impact (DI)',
-      'Explainability: SHAP (Shapley Additive Explanations) vs. LIME, Global vs Local attributions',
-      'Human-in-the-Loop (HITL): Amazon Augmented AI (A2I) for low-confidence review',
-      'AI Service Cards (AWS-authored) vs. Model Cards (Customer-authored)'
+      'SageMaker Clarify Metrics: Class Imbalance (CI), Difference in Positive Proportions in Labels (DPL), DPPL (Difference in Positive Proportions in Predicted Labels), Disparate Impact (DI)',
+      'Explainability: SHAP (Shapley Additive exPlanations) vs. LIME (Local Interpretable Model-agnostic Explanations), Global Feature Importance vs Local Prediction Attributions',
+      'Human-in-the-Loop (HITL): Amazon Augmented AI (Amazon A2I) for low-confidence review workflows',
+      'AI Service Cards (AWS-authored for pre-built AI) vs. Model Cards (Customer-authored for custom SageMaker models)'
     ],
     topExamPatterns: [
-      'Detect bias in dataset before model training -> SageMaker Clarify Pre-Training Bias (CI, DPL)',
-      'Human review workflow for low-confidence Textract/Rekognition predictions -> Amazon A2I',
-      'Documenting custom model intended use and evaluation results -> SageMaker Model Cards'
+      'Detect bias in dataset before model training -> SageMaker Clarify Pre-Training Bias (CI [Class Imbalance], DPL [Difference in Positive Proportions in Labels])',
+      'Human review workflow for low-confidence Textract/Rekognition predictions -> Amazon A2I (Augmented AI [HITL])',
+      'Documenting custom model intended use and evaluation results -> Amazon SageMaker Model Cards'
     ],
-    keyServices: ['SageMaker Clarify', 'Amazon Augmented AI (A2I)', 'SageMaker Model Cards', 'AWS AI Service Cards']
+    keyServices: ['Amazon SageMaker Clarify', 'Amazon Augmented AI (Amazon A2I)', 'Amazon SageMaker Model Cards', 'AWS AI Service Cards']
   },
   {
     domainId: 5,
     name: 'Domain 5: Security, Compliance, and Governance',
     weight: '14% of Exam (~9 Questions)',
     coreConcepts: [
-      'AWS Shared Responsibility Model for AI (AWS manages FM security & physical infra; Customer manages data, prompts, IAM, output validation)',
-      'Amazon Bedrock Guardrails: Denied Topics, Content Filters, Sensitive Information Filters (PII), Contextual Grounding Check',
-      'Data Encryption: AWS KMS Customer Managed Keys (CMK) for custom models and S3 vectors',
-      'Network Isolation: AWS PrivateLink / VPC Endpoints for Bedrock & SageMaker (traffic never traverses public internet)',
-      'Auditing & Compliance: AWS CloudTrail (API logs), AWS CloudWatch (metrics & alarms), AWS Audit Manager (compliance reporting)',
-      'SageMaker Model Monitor: Data Drift, Concept Drift, Model Quality Drift'
+      'AWS Shared Responsibility Model for AI (AWS manages Foundation Model security & physical infra; Customer manages data, prompts, IAM [Identity and Access Management], output validation)',
+      'Amazon Bedrock Guardrails: Denied Topics, Content Filters, Sensitive Information Filters (PII [Personally Identifiable Information] & PHI [Protected Health Information]), Contextual Grounding Check (Hallucination Detection)',
+      'Data Encryption: AWS KMS (Key Management Service) Customer Managed Keys (CMK) for custom models and S3 vectors',
+      'Network Isolation: AWS PrivateLink / VPC (Virtual Private Cloud) Endpoints for Bedrock & SageMaker (traffic never traverses public internet)',
+      'Auditing & Compliance: AWS CloudTrail (API logs & caller identity), AWS CloudWatch (metrics & alarms), AWS Audit Manager (compliance reporting)',
+      'SageMaker Model Monitor: Data (Feature) Drift, Concept (Target) Drift, Model Quality Drift'
     ],
     topExamPatterns: [
       'Prevent prompt injection and mask credit card numbers in real time -> Amazon Bedrock Guardrails',
-      'Invoke Bedrock without exposing traffic to public internet -> AWS PrivateLink / VPC Interface Endpoint',
+      'Invoke Bedrock without exposing traffic to public internet -> AWS PrivateLink / VPC (Virtual Private Cloud) Interface Endpoint',
       'Log who invoked Bedrock Foundation Models for security audit -> AWS CloudTrail'
     ],
-    keyServices: ['Amazon Bedrock Guardrails', 'AWS KMS', 'AWS PrivateLink', 'AWS CloudTrail', 'SageMaker Model Monitor']
+    keyServices: ['Amazon Bedrock Guardrails', 'AWS KMS (Key Management Service)', 'AWS PrivateLink', 'AWS CloudTrail', 'Amazon SageMaker Model Monitor']
   }
 ];

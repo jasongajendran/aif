@@ -54,9 +54,9 @@ export const EvaluationMetricsVisualizer: React.FC<EvaluationMetricsVisualizerPr
 
   const genAiMetrics = [
     {
-      name: 'ROUGE-1 / ROUGE-2 / ROUGE-L',
+      name: 'ROUGE-1 / ROUGE-2 / ROUGE-L (Recall-Oriented Understudy for Gisting Evaluation)',
       primaryUse: 'Text Summarization',
-      measurement: 'N-gram overlap (unigrams, bigrams, and Longest Common Subsequence) between generated summary and human reference.',
+      measurement: 'N-gram overlap (unigrams, bigrams, and Longest Common Subsequence [LCS]) between generated summary and human reference.',
       examRule: 'Use ROUGE for evaluating automated text summarization models.',
       relatedQuestions: [428, 434],
     },
@@ -68,14 +68,14 @@ export const EvaluationMetricsVisualizer: React.FC<EvaluationMetricsVisualizerPr
       relatedQuestions: [428],
     },
     {
-      name: 'BERTScore',
+      name: 'BERTScore (Bidirectional Encoder Representations from Transformers Score)',
       primaryUse: 'Semantic Text Quality',
       measurement: 'Computes cosine similarity between contextual BERT embeddings of tokens in candidate and reference, capturing semantic meaning rather than exact word matches.',
       examRule: 'Captures synonyms and paraphrasing that lexical n-gram metrics (ROUGE/BLEU) miss.',
       relatedQuestions: [434],
     },
     {
-      name: 'Perplexity',
+      name: 'Perplexity (PPL)',
       primaryUse: 'Model Uncertainty & Fluency',
       measurement: 'Exponentiated cross-entropy loss measuring how surprised a language model is by a sequence of test tokens. Lower is better.',
       examRule: 'Lower perplexity means the model predicts text with higher confidence and natural grammar.',
@@ -83,13 +83,13 @@ export const EvaluationMetricsVisualizer: React.FC<EvaluationMetricsVisualizerPr
     },
     {
       name: 'Faithfulness & Answer Relevance',
-      primaryUse: 'RAG Systems & Grounding',
+      primaryUse: 'Retrieval-Augmented Generation (RAG) Systems & Grounding',
       measurement: 'Checks if generated claims are 100% supported by retrieved source context chunks (Faithfulness) and address the user prompt (Relevance).',
-      examRule: 'Low faithfulness indicates hallucination in RAG applications.',
+      examRule: 'Low faithfulness indicates hallucination in Retrieval-Augmented Generation (RAG) applications.',
       relatedQuestions: [421, 426, 443],
     },
     {
-      name: 'TTFT & Token Throughput (Latency)',
+      name: 'TTFT (Time to First Token) & Token Throughput (Latency)',
       primaryUse: 'Inference Performance',
       measurement: 'Time to First Token (TTFT in ms) measures initial response latency; Tokens/second measures generation speed across concurrent users.',
       examRule: 'Streaming responses and Bedrock Provisioned Throughput optimize TTFT and sustained throughput.',
