@@ -41,7 +41,38 @@ export interface UserProgress {
   bookmarks: number[];
 }
 
-export type ViewMode = 'practice' | 'visualizations' | 'ready-reckoner';
+export type ViewMode = 'practice' | 'visualizations' | 'ready-reckoner' | 'flashcards';
+
+export type FlashcardDeckId = 
+  | 'all'
+  | 'domain-1'
+  | 'domain-2'
+  | 'domain-3'
+  | 'domain-4'
+  | 'domain-5'
+  | 'exam-traps'
+  | 'scenario-triggers';
+
+export interface Flashcard {
+  id: string;
+  deckId: FlashcardDeckId;
+  domain: DomainType | 'Exam Traps & Contrasts' | 'Rapid Scenario Triggers';
+  title: string;
+  highYieldRating: 'essential' | 'high-frequency' | 'critical-distractor';
+  front: {
+    question: string;
+    scenarioOrContext?: string;
+    keyConceptBadge: string;
+  };
+  back: {
+    coreAnswer: string;
+    examKeywords: string[];
+    distractorTrap?: string;
+    mentalModelOrAnalogy?: string;
+    keyPoints: string[];
+    relatedQuestionIds?: number[];
+  };
+}
 
 export type ReckonerTab = 
   | 'comparison-tables'

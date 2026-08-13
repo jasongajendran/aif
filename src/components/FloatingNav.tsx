@@ -103,6 +103,21 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
             <span className="text-[10px] font-mono opacity-80">5 Sections</span>
           </button>
 
+          <button
+            onClick={() => handleSelectView('flashcards')}
+            className={`w-full px-3 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between ${
+              currentView === 'flashcards'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                : 'bg-slate-950/70 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              <Layers className="w-4 h-4" />
+              <span>Exam Flashcards</span>
+            </div>
+            <span className="text-[10px] font-mono opacity-80">Active Recall</span>
+          </button>
+
           <div className="pt-1 border-t border-slate-800 flex justify-end">
             <button
               onClick={scrollToTop}

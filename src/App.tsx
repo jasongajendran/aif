@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { McqPracticeView } from './components/McqPracticeView';
 import { VisualizationsHub } from './components/visualizations/VisualizationsHub';
 import { ReadyReckonerHub } from './components/reckoner/ReadyReckonerHub';
+import { ExamFlashcardsHub } from './components/flashcards/ExamFlashcardsHub';
 import { FloatingNav } from './components/FloatingNav';
 import { ViewMode, NavigationOrigin, VisualizationTab, ReckonerTab } from './types';
 
@@ -14,7 +15,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewMode>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_VIEW_MODE);
-      return (saved === 'visualizations' || saved === 'practice' || saved === 'ready-reckoner') ? saved : 'practice';
+      return (saved === 'visualizations' || saved === 'practice' || saved === 'ready-reckoner' || saved === 'flashcards') ? saved : 'practice';
     } catch {
       return 'practice';
     }
@@ -138,7 +139,7 @@ export default function App() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
-        ) : (
+        ) : currentView === 'ready-reckoner' ? (
           <ReadyReckonerHub
             questions={questions}
             onSelectQuestion={handleSelectQuestionFromVisualizer}
@@ -150,6 +151,23 @@ export default function App() {
             }}
             onOpenPractice={() => {
               setCurrentView('practice');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : (
+          <ExamFlashcardsHub
+            questions={questions}
+            onSelectQuestion={handleSelectQuestionFromVisualizer}
+            onOpenPractice={() => {
+              setCurrentView('practice');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenVisualizations={() => {
+              setCurrentView('visualizations');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenReadyReckoner={() => {
+              setCurrentView('ready-reckoner');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />

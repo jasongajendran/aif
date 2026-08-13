@@ -17,6 +17,7 @@ interface McqPracticeViewProps {
   onReturnToOrigin?: () => void;
   onOpenVisualizations?: () => void;
   onOpenReadyReckoner?: () => void;
+  onOpenFlashcards?: () => void;
 }
 
 const CHUNK_SIZE = 50;
@@ -31,6 +32,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   onReturnToOrigin,
   onOpenVisualizations,
   onOpenReadyReckoner,
+  onOpenFlashcards,
 }) => {
   const [internalSelectedQuestionId, setInternalSelectedQuestionId] = useState<number>(1);
   const selectedQuestionId = propSelectedQuestionId !== undefined ? propSelectedQuestionId : internalSelectedQuestionId;
@@ -165,7 +167,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             </div>
             <div className="min-w-0">
               <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400">
-                Direct Practice Link from {navigationOrigin.view === 'visualizations' ? 'Concept Visualizer' : 'Ready Reckoner'}
+                Direct Practice Link from {navigationOrigin.view === 'visualizations' ? 'Concept Visualizer' : navigationOrigin.view === 'flashcards' ? 'Exam Flashcards' : 'Ready Reckoner'}
               </div>
               <div className="text-sm sm:text-base font-bold text-white truncate">
                 {navigationOrigin.sectionTitle}
@@ -178,7 +180,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all shadow-md shadow-amber-500/20 shrink-0 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Return to {navigationOrigin.view === 'visualizations' ? 'Visualizer' : 'Ready Reckoner'}</span>
+            <span>Return to {navigationOrigin.view === 'visualizations' ? 'Visualizer' : navigationOrigin.view === 'flashcards' ? 'Flashcards' : 'Ready Reckoner'}</span>
           </button>
         </div>
       )}

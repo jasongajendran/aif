@@ -117,6 +117,21 @@ export const Header: React.FC<HeaderProps> = ({
               Cheat Sheets & Flows
             </span>
           </button>
+
+          <button
+            onClick={() => onViewChange('flashcards')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 whitespace-nowrap min-h-[42px] ${
+              currentView === 'flashcards'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20 ring-2 ring-amber-400'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
+            }`}
+          >
+            <Layers className="w-4 h-4 text-amber-400" />
+            <span>Exam Flashcards</span>
+            <span className="bg-purple-500/20 text-purple-300 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded font-extrabold ml-1">
+              Active Recall
+            </span>
+          </button>
         </div>
 
       </div>
