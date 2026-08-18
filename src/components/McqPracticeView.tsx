@@ -167,10 +167,29 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
   const handleOptionClick = (optionId: OptionId) => {
     if (!currentQuestion) return;
-    setUserSelectedOptions((prev) => ({
-      ...prev,
-      [currentQuestion.id]: optionId,
-    }));
+    setUserSelectedOptions((prev) => {
+      const isMulti = Array.isArray(currentQuestion.correctOption);
+      if (isMulti) {
+        const current = prev[currentQuestion.id];
+        const currentArr: OptionId[] = Array.isArray(current)
+          ? current
+          : current
+          ? [current as OptionId]
+          : [];
+        const exists = currentArr.includes(optionId);
+        const updated = exists
+          ? currentArr.filter((id) => id !== optionId)
+          : [...currentArr, optionId];
+        return {
+          ...prev,
+          [currentQuestion.id]: updated,
+        };
+      }
+      return {
+        ...prev,
+        [currentQuestion.id]: optionId,
+      };
+    });
   };
 
   const toggleRevealAnswer = () => {
@@ -442,6 +461,11 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               <span className="bg-amber-500 text-slate-950 font-mono text-xs sm:text-sm font-black px-2.5 py-1 rounded-lg shadow-md">
                 Question {currentQuestion.id} of {questions.length}
               </span>
+              {Array.isArray(currentQuestion.correctOption) && (
+                <span className="bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg">
+                  Select {currentQuestion.correctOption.length} Answers
+                </span>
+              )}
               <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg">
                 {currentQuestion.domain}
               </span>
@@ -540,7 +564,9 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           {/* Options List */}
           <div className="space-y-2 mb-5">
             {currentQuestion.options.map((option) => {
-              const isSelected = userPickedOption === option.id;
+              const isSelected = Array.isArray(userPickedOption)
+                ? userPickedOption.includes(option.id)
+                : userPickedOption === option.id;
               const isCorrectOption = Array.isArray(currentQuestion.correctOption)
                 ? currentQuestion.correctOption.includes(option.id)
                 : option.id === currentQuestion.correctOption;

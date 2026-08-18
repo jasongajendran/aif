@@ -988,7 +988,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Data protection' },
       { id: 'E', text: 'Auto scaling inference endpoints' },
     ],
-    correctOption: 'B',
+    correctOption: ['B', 'D'],
     correctOptionText: 'Threat detection AND Data protection',
     explanation: 'When proving regulatory compliance for an AI application on AWS, auditors focus heavily on security domains. Data protection ensures sensitive data is encrypted at rest and in transit, while threat detection ensures malicious or unauthorized access attempts are logged and mitigated.',
     wrongOptionsExplanation: {
@@ -1071,7 +1071,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Run the model training pipeline frequently to avoid data drift.' },
       { id: 'E', text: 'Use the ROUGE technique to guarantee the model is 100% accurate.' },
     ],
-    correctOption: 'B',
+    correctOption: ['B', 'C'],
     correctOptionText: 'Evaluate model behavior for transparency AND Detect imbalances/disparities in data',
     explanation: 'Responsible AI requires proactive mitigation of harms. Detecting data imbalances prevents models from learning demographic biases, while evaluating model behavior ensures transparency and accountability for automated decisions.',
     wrongOptionsExplanation: {
@@ -1181,7 +1181,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Amazon Comprehend' },
       { id: 'E', text: 'Amazon Polly' },
     ],
-    correctOption: 'C',
+    correctOption: ['C', 'D'],
     correctOptionText: 'Amazon Bedrock AND Amazon Comprehend',
     explanation: 'Amazon Comprehend is a purpose-built NLP service with native pre-trained sentiment analysis capabilities. Amazon Bedrock provides foundation models (LLMs) that can perform sentiment classification on customer review text via prompts.',
     wrongOptionsExplanation: {
@@ -1615,7 +1615,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Include fairness metrics during model evaluation.' },
       { id: 'E', text: 'Adjust the temperature parameter to zero.' },
     ],
-    correctOption: 'A, D',
+    correctOption: ['A', 'D'],
     correctOptionText: 'Modify the training data to mitigate bias before model training AND Include fairness metrics during model evaluation.',
     explanation: 'Building responsible AI requires addressing bias across the lifecycle. Mitigating bias in training data (pre-training) prevents learning discriminatory patterns, while evaluating fairness metrics (post-training) quantifies equitable behavior across demographics.',
     wrongOptionsExplanation: {
@@ -3344,7 +3344,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Configure the Amazon S3 log bucket with Object Lock and a lifecycle transition to S3 Glacier Deep Archive.' },
       { id: 'E', text: 'Use AWS Audit Manager as the raw API log destination.' },
     ],
-    correctOption: 'B, D',
+    correctOption: ['B', 'D'],
     correctOptionText: 'Create an AWS CloudTrail trail that delivers Amazon Bedrock events to Amazon S3; Configure the Amazon S3 log bucket with Object Lock and a lifecycle transition to S3 Glacier Deep Archive.',
     explanation: 'AWS CloudTrail captures Bedrock API activity and delivers audit logs to S3. S3 Object Lock prevents deletion, while S3 Lifecycle transitions logs to S3 Glacier Deep Archive for low-cost 5-year retention.',
     wrongOptionsExplanation: {
@@ -3982,7 +3982,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'AWS Direct Connect' },
       { id: 'E', text: 'Amazon S3 Glacier' },
     ],
-    correctOption: 'A, B',
+    correctOption: ['A', 'B'],
     correctOptionText: 'Option A (AWS Audit Manager) and Option B (AWS Config).',
     explanation: 'AWS Audit Manager helps continuously audit AWS usage and map configurations to compliance frameworks. AWS Config continuously monitors and records AWS resource configurations, enabling compliance assessments against internal policies.',
     wrongOptionsExplanation: {
@@ -4200,7 +4200,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Response generation by the foundation model' },
       { id: 'E', text: 'Creation and updating of the vector search index' },
     ],
-    correctOption: 'C, E',
+    correctOption: ['C', 'E'],
     correctOptionText: 'Option C (Generation of content embeddings for new articles) and Option E (Creation and updating of the vector search index).',
     explanation: 'In RAG, chunking, generating embeddings for new content, and updating the vector search index happen asynchronously offline before user requests arrive. Query embedding, retrieval, and response generation occur online in real-time.',
     wrongOptionsExplanation: {
@@ -4418,7 +4418,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Violence' },
       { id: 'E', text: 'Politics' },
     ],
-    correctOption: 'B, D',
+    correctOption: ['B', 'D'],
     correctOptionText: 'Option B (Hate) and Option D (Violence).',
     explanation: 'Guardrails for Amazon Bedrock content filters support predefined harmful categories including Hate, Violence, Insults, Sexual content, and Misconduct.',
     wrongOptionsExplanation: {
@@ -5095,7 +5095,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Use Amazon CloudWatch Logs as the network path to Amazon Bedrock.' },
       { id: 'E', text: 'Deploy Amazon Bedrock on AWS Outposts.' },
     ],
-    correctOption: 'A, B',
+    correctOption: ['A', 'B'],
     correctOptionText: 'Option A (Create an interface VPC endpoint) and Option B (Route Bedrock API calls through private DNS).',
     explanation: 'Amazon Bedrock supports interface VPC endpoints powered by AWS PrivateLink. Traffic travels securely within the AWS network without an Internet Gateway or NAT Gateway when calls are routed to the VPC endpoint.',
     wrongOptionsExplanation: {
@@ -6096,7 +6096,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Flexibility' },
       { id: 'E', text: 'Tolerance' },
     ],
-    correctOption: 'B, C',
+    correctOption: ['B', 'C'],
     correctOptionText: 'Option B (Fairness) and Option C (Transparency).',
     explanation: 'Fairness ensures non-discriminatory candidate evaluation, while Transparency/Explainability ensures decision rationale is auditable and understandable rather than an opaque black box.',
     wrongOptionsExplanation: {
@@ -6638,7 +6638,7 @@ export const questions: Question[] = [
       { id: 'D', text: 'Amazon Lex' },
       { id: 'E', text: 'Amazon Comprehend' },
     ],
-    correctOption: 'A, B',
+    correctOption: ['A', 'B'],
     correctOptionText: 'Option A (Amazon Transcribe) and Option B (Amazon Polly).',
     explanation: 'Amazon Transcribe converts spoken English audio into a text transcript. After translation, Amazon Polly synthesizes the translated text into lifelike spoken audio voice-overs.',
     wrongOptionsExplanation: {
