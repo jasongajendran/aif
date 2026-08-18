@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Flashcard } from '../../types';
+import { HighlightedExamText } from '../HighlightedExamText';
 import { 
   CheckCircle, Bookmark, BookmarkCheck, RotateCw, 
   Flame, Tag, ExternalLink, AlertTriangle, Check, Search
@@ -142,12 +143,22 @@ export const FlashcardGrid: React.FC<FlashcardGridProps> = ({
                   <div className="space-y-2 py-1">
                     {card.front.scenarioOrContext && (
                       <p className="italic text-slate-400 text-[11px] line-clamp-2">
-                        "{card.front.scenarioOrContext}"
+                        "<HighlightedExamText
+                          text={card.front.scenarioOrContext}
+                          clues={card.back.examKeywords}
+                          domain={card.domain}
+                          enabled={true}
+                        />"
                       </p>
                     )}
-                    <p className="font-semibold text-amber-200/90 leading-snug">
-                      {card.front.question}
-                    </p>
+                    <div className="font-semibold text-amber-200/90 leading-snug">
+                      <HighlightedExamText
+                        text={card.front.question}
+                        clues={card.back.examKeywords}
+                        domain={card.domain}
+                        enabled={true}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2.5 py-1">

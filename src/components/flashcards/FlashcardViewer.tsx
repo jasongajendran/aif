@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Flashcard } from '../../types';
+import { HighlightedExamText } from '../HighlightedExamText';
 import { 
   RotateCw, CheckCircle, RefreshCw, Bookmark, BookmarkCheck, 
   ArrowLeft, ArrowRight, Sparkles, AlertTriangle, Lightbulb, 
@@ -165,14 +166,24 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({
                     📋 Exam Scenario Context:
                   </span>
                   <p className="italic text-slate-200">
-                    "{card.front.scenarioOrContext}"
+                    "<HighlightedExamText
+                      text={card.front.scenarioOrContext}
+                      clues={card.back.examKeywords}
+                      domain={card.domain}
+                      enabled={true}
+                    />"
                   </p>
                 </div>
               )}
 
               {/* Core Question Prompt */}
               <div className="bg-amber-500/5 p-5 rounded-2xl border border-amber-500/20 text-base sm:text-lg font-bold text-amber-100 leading-relaxed">
-                {card.front.question}
+                <HighlightedExamText
+                  text={card.front.question}
+                  clues={card.back.examKeywords}
+                  domain={card.domain}
+                  enabled={true}
+                />
               </div>
 
               {/* Prompt to Flip */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Flashcard } from '../../types';
+import { HighlightedExamText } from '../HighlightedExamText';
 import { 
   Timer, X, RotateCw, CheckCircle, RefreshCw, Trophy, 
   Flame, ArrowRight, Play, Eye
@@ -132,11 +133,21 @@ export const FlashcardBlitzModal: React.FC<FlashcardBlitzModalProps> = ({
                 </h4>
                 {currentCard.front.scenarioOrContext && (
                   <p className="text-xs italic text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800">
-                    "{currentCard.front.scenarioOrContext}"
+                    "<HighlightedExamText
+                      text={currentCard.front.scenarioOrContext}
+                      clues={currentCard.back.examKeywords}
+                      domain={currentCard.domain}
+                      enabled={true}
+                    />"
                   </p>
                 )}
                 <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-base font-bold text-amber-200">
-                  {currentCard.front.question}
+                  <HighlightedExamText
+                    text={currentCard.front.question}
+                    clues={currentCard.back.examKeywords}
+                    domain={currentCard.domain}
+                    enabled={true}
+                  />
                 </div>
               </div>
 

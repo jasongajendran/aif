@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Question, OptionId, NavigationOrigin } from '../types';
+import { HighlightedExamText } from './HighlightedExamText';
 import { 
   CheckCircle2, XCircle, ArrowLeft, ArrowRight, Lightbulb, 
   Eye, EyeOff, Sparkles, Check,
@@ -64,6 +65,28 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
   // Track manually revealed answers per question (when alwaysRevealAnswers is OFF)
   const [revealedQuestions, setRevealedQuestions] = useState<Record<number, boolean>>({});
+
+  // Highlight Exam Keywords & Trigger Clues (defaults to ON for rapid revision)
+  const [highlightKeywords, setHighlightKeywords] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('aif_c01_highlight_keywords_v1');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const handleToggleHighlightKeywords = () => {
+    setHighlightKeywords((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('aif_c01_highlight_keywords_v1', String(next));
+      } catch (e) {
+        console.error(e);
+      }
+      return next;
+    });
+  };
 
   // Monitor window scroll for Go To Top icon
   useEffect(() => {
@@ -236,13 +259,13 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
       </div>
 
       {/* Question Dropdown Selector for Easy Navigation (Compact Space) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-5 shadow-lg space-y-3">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 sm:p-4 shadow-md space-y-2">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Dropdown Selector */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
             <div className="flex items-center space-x-2 shrink-0">
-              <ListFilter className="w-5 h-5 text-amber-400" />
-              <label htmlFor="question-select" className="text-sm sm:text-base font-bold text-slate-100 whitespace-nowrap">
+              <ListFilter className="w-4 h-4 text-amber-400" />
+              <label htmlFor="question-select" className="text-sm font-bold text-slate-100 whitespace-nowrap">
                 Select Question ({filteredQuestions.length}):
               </label>
             </div>
@@ -255,13 +278,13 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                 setSelectedQuestionId(qId);
                 window.scrollTo({ top: 100, behavior: 'smooth' });
               }}
-              className="bg-slate-950 border-2 border-slate-700 text-amber-300 font-bold text-base sm:text-lg rounded-xl px-3.5 py-3 w-full flex-1 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none min-h-[50px] shadow-inner cursor-pointer"
+              className="bg-slate-950 border border-slate-700 text-amber-300 font-bold text-sm sm:text-base rounded-lg px-3 py-2 w-full flex-1 focus:ring-1 focus:ring-amber-500 focus:border-amber-500 focus:outline-none min-h-[40px] shadow-inner cursor-pointer"
             >
               {filteredQuestions.map((q, idx) => {
                 const qNumInSet = idx + 1;
                 const snippet = q.questionText.length > 80 ? q.questionText.slice(0, 80) + '...' : q.questionText;
                 return (
-                  <option key={q.id} value={q.id} className="bg-slate-950 text-slate-100 py-2">
+                  <option key={q.id} value={q.id} className="bg-slate-950 text-slate-100 py-1">
                     Q{q.id} (#{qNumInSet}): {snippet}
                   </option>
                 );
@@ -274,7 +297,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             <button
               onClick={handlePrev}
               disabled={currentQuestionIndex === 0}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 border border-slate-700 text-slate-200 text-xs sm:text-sm font-bold flex items-center space-x-1.5 transition-colors min-h-[46px]"
+              className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 border border-slate-700 text-slate-200 text-xs sm:text-sm font-bold flex items-center space-x-1.5 transition-colors min-h-[40px]"
               title="Previous Question"
             >
               <ArrowLeft className="w-4 h-4 text-amber-400" />
@@ -288,7 +311,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             <button
               onClick={handleNext}
               disabled={currentQuestionIndex === filteredQuestions.length - 1}
-              className="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-slate-950 text-xs sm:text-sm font-black flex items-center space-x-1.5 transition-colors min-h-[46px] shadow-md shadow-amber-500/20"
+              className="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-slate-950 text-xs sm:text-sm font-black flex items-center space-x-1.5 transition-colors min-h-[40px] shadow-sm shadow-amber-500/20"
               title="Next Question"
             >
               <span>Next</span>
@@ -300,18 +323,18 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
       {/* Main Question Card Container */}
       {currentQuestion ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-7 shadow-2xl relative">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xl relative">
           
           {/* Card Header Info */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-amber-500 text-slate-950 font-mono text-sm sm:text-base font-black px-3.5 py-1.5 rounded-xl shadow-md">
+              <span className="bg-amber-500 text-slate-950 font-mono text-xs sm:text-sm font-black px-2.5 py-1 rounded-lg shadow-md">
                 Question {currentQuestion.id} of {questions.length}
               </span>
-              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl">
+              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg">
                 {currentQuestion.domain}
               </span>
-              <span className="bg-slate-800 text-slate-200 text-xs sm:text-sm px-3 py-1.5 rounded-xl font-medium border border-slate-700">
+              <span className="bg-slate-800 text-slate-200 text-[10px] sm:text-xs px-2 py-1 rounded-lg font-medium border border-slate-700">
                 {currentQuestion.topic}
               </span>
             </div>
@@ -351,21 +374,60 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           </div>
 
           {/* Scenario Context Block */}
-          <div className="bg-slate-950/90 border-l-4 border-amber-500 rounded-r-2xl p-4 sm:p-6 mb-6 text-slate-100 text-base sm:text-lg leading-relaxed font-sans shadow-inner">
-            <div className="flex items-center space-x-2 text-amber-400 text-xs sm:text-sm font-bold uppercase tracking-wider mb-2">
-              <Sparkles className="w-4 h-4" />
-              <span>Scenario Context</span>
+          <div className="bg-slate-950/90 border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 mb-4 text-slate-100 text-sm sm:text-base leading-relaxed font-sans shadow-inner">
+            <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-900">
+              <div className="flex items-center space-x-2 text-amber-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Scenario Context</span>
+                {highlightKeywords && (
+                  <span className="hidden sm:inline-block bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                    Keywords Highlighted
+                  </span>
+                )}
+              </div>
+
+              {/* Keywords Highlight Toggle Button */}
+              <button
+                onClick={handleToggleHighlightKeywords}
+                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-all border ${
+                  highlightKeywords
+                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                }`}
+                title="Toggle highlighting of key exam triggers and keyword clues"
+              >
+                <Sparkles className={`w-3 h-3 ${highlightKeywords ? 'text-amber-400' : 'text-slate-500'}`} />
+                <span>Exam Clues:</span>
+                <span className={`font-mono font-bold text-[10px] ${highlightKeywords ? 'text-amber-300' : 'text-slate-400'}`}>
+                  {highlightKeywords ? 'ON' : 'OFF'}
+                </span>
+              </button>
             </div>
-            <p className="font-normal text-slate-100">{currentQuestion.scenario}</p>
+            
+            <p className="font-normal text-slate-100">
+              <HighlightedExamText
+                text={currentQuestion.scenario}
+                clues={currentQuestion.keywordClues}
+                topic={currentQuestion.topic}
+                domain={currentQuestion.domain}
+                enabled={highlightKeywords}
+              />
+            </p>
           </div>
 
           {/* Question Text */}
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-6 leading-snug tracking-tight">
-            {currentQuestion.questionText}
+          <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-4 leading-snug tracking-tight">
+            <HighlightedExamText
+              text={currentQuestion.questionText}
+              clues={currentQuestion.keywordClues}
+              topic={currentQuestion.topic}
+              domain={currentQuestion.domain}
+              enabled={highlightKeywords}
+            />
           </h2>
 
           {/* Options List */}
-          <div className="space-y-3.5 mb-6">
+          <div className="space-y-2 mb-5">
             {currentQuestion.options.map((option) => {
               const isSelected = userPickedOption === option.id;
               const isCorrectOption = Array.isArray(currentQuestion.correctOption)
@@ -377,16 +439,16 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
               if (isRevealed) {
                 if (isCorrectOption) {
-                  optionStyle = 'bg-emerald-950/80 border-emerald-500 text-emerald-50 ring-2 ring-emerald-500/60 font-medium shadow-lg shadow-emerald-950/40';
+                  optionStyle = 'bg-emerald-950/80 border-emerald-500 text-emerald-50 ring-1 ring-emerald-500/60 font-medium shadow-md shadow-emerald-950/40';
                   badgeStyle = 'bg-emerald-500 text-slate-950 font-black';
                 } else if (isSelected && !isCorrectOption) {
-                  optionStyle = 'bg-rose-950/70 border-rose-500 text-rose-50 ring-2 ring-rose-500/60';
+                  optionStyle = 'bg-rose-950/70 border-rose-500 text-rose-50 ring-1 ring-rose-500/60';
                   badgeStyle = 'bg-rose-500 text-white font-black';
                 } else {
                   optionStyle = 'bg-slate-950/50 border-slate-800 text-slate-400 opacity-70';
                 }
               } else if (isSelected) {
-                optionStyle = 'bg-slate-800 border-amber-400 text-white ring-2 ring-amber-400';
+                optionStyle = 'bg-slate-800 border-amber-400 text-white ring-1 ring-amber-400';
                 badgeStyle = 'bg-amber-400 text-slate-950 font-black';
               }
 
@@ -394,26 +456,26 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                 <button
                   key={option.id}
                   onClick={() => handleOptionClick(option.id)}
-                  className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-150 flex items-start space-x-4 group relative min-h-[56px] ${optionStyle}`}
+                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl border transition-all duration-150 flex items-center space-x-3 group relative min-h-[44px] ${optionStyle}`}
                 >
-                  <span className={`w-9 h-9 rounded-xl border text-base sm:text-lg font-mono font-bold flex items-center justify-center flex-shrink-0 transition-all ${badgeStyle}`}>
+                  <span className={`w-7 h-7 rounded-lg border text-sm sm:text-base font-mono font-bold flex items-center justify-center flex-shrink-0 transition-all ${badgeStyle}`}>
                     {option.id}
                   </span>
 
-                  <span className="flex-1 pt-0.5 text-base sm:text-lg leading-relaxed">
+                  <span className="flex-1 text-sm sm:text-base leading-snug">
                     {option.text}
                   </span>
 
                   {isRevealed && isCorrectOption && (
-                    <div className="flex items-center space-x-1.5 bg-emerald-500 text-slate-950 text-xs sm:text-sm font-black px-3 py-1.5 rounded-xl flex-shrink-0 shadow-sm">
-                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span>CORRECT ANSWER</span>
+                    <div className="flex items-center space-x-1.5 bg-emerald-500 text-slate-950 text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg flex-shrink-0 shadow-sm">
+                      <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">CORRECT</span>
                     </div>
                   )}
                   {isSelected && !isCorrectOption && isRevealed && (
-                    <div className="flex items-center space-x-1.5 bg-rose-500 text-white text-xs sm:text-sm font-black px-3 py-1.5 rounded-xl flex-shrink-0 shadow-sm">
-                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span>YOUR PICK</span>
+                    <div className="flex items-center space-x-1.5 bg-rose-500 text-white text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg flex-shrink-0 shadow-sm">
+                      <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">YOUR PICK</span>
                     </div>
                   )}
                 </button>
@@ -450,24 +512,24 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
           {/* Answer Breakdown & Detailed Explanations Panel */}
           {isRevealed && (
-            <div className="space-y-4 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="space-y-3 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
               
               {/* Correct Answer Explanation with Scenario Example */}
-              <div className="bg-emerald-950/40 border border-emerald-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
-                <p className="text-base sm:text-lg text-emerald-100 leading-relaxed font-medium">
+              <div className="bg-emerald-950/40 border border-emerald-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+                <p className="text-sm sm:text-base text-emerald-100 leading-relaxed font-medium">
                   {currentQuestion.explanation}
                 </p>
-                <div className="bg-emerald-950/90 border border-emerald-800 rounded-xl p-4 text-sm sm:text-base text-emerald-200 space-y-1.5">
-                  <div className="font-bold text-emerald-300 flex items-center gap-1.5 text-sm sm:text-base">
-                    <Check className="w-4 h-4 text-emerald-400" /> Real-World Scenario Example:
+                <div className="bg-emerald-950/90 border border-emerald-800 rounded-lg p-3 text-xs sm:text-sm text-emerald-200 space-y-1">
+                  <div className="font-bold text-emerald-300 flex items-center gap-1.5 text-xs sm:text-sm">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" /> Real-World Scenario Example:
                   </div>
                   <p className="leading-relaxed">{currentQuestion.example}</p>
                 </div>
               </div>
 
               {/* Why Wrong Answers are Wrong Section */}
-              <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-5 sm:p-6">
-                <div className="grid gap-3">
+              <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-4 sm:p-5">
+                <div className="grid gap-2.5">
                   {currentQuestion.options.map((opt) => {
                     const isCorrect = Array.isArray(currentQuestion.correctOption)
                       ? currentQuestion.correctOption.includes(opt.id)
@@ -475,7 +537,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                     if (isCorrect) return null;
                     const explanation = currentQuestion.wrongOptionsExplanation[opt.id];
                     return (
-                      <div key={opt.id} className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 sm:p-4 text-sm sm:text-base text-slate-200 leading-relaxed">
+                      <div key={opt.id} className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 text-xs sm:text-sm text-slate-200 leading-relaxed">
                         <span className="font-bold text-rose-400 mr-2">Option {opt.id} ({opt.text}):</span>
                         <span>{explanation}</span>
                       </div>
@@ -485,14 +547,14 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               </div>
 
               {/* Exam Tip & Keyword Clues Callout */}
-              <div className="bg-gradient-to-r from-amber-950/50 to-slate-900 border border-amber-500/50 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
-                <p className="text-base sm:text-lg font-medium text-amber-100 leading-relaxed">
+              <div className="bg-gradient-to-r from-amber-950/50 to-slate-900 border border-amber-500/50 rounded-xl p-4 sm:p-5 space-y-3 shadow-md">
+                <p className="text-sm sm:text-base font-medium text-amber-100 leading-relaxed">
                   {currentQuestion.examTip}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-xs sm:text-sm text-amber-400 font-bold mr-1">Keyword Clues:</span>
+                  <span className="text-xs text-amber-400 font-bold mr-1">Keyword Clues:</span>
                   {currentQuestion.keywordClues.map((kw, i) => (
-                    <span key={i} className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs sm:text-sm px-3 py-1 rounded-full font-mono font-bold">
+                    <span key={i} className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-mono font-bold">
                       "{kw}"
                     </span>
                   ))}
