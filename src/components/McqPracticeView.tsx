@@ -76,6 +76,28 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
     }
   });
 
+  // Collapsible Set Bar state (saves vertical space)
+  const [isSetBarCollapsed, setIsSetBarCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('aif_c01_set_bar_collapsed_v1');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSetBarCollapse = () => {
+    setIsSetBarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('aif_c01_set_bar_collapsed_v1', String(next));
+      } catch (e) {
+        console.error(e);
+      }
+      return next;
+    });
+  };
+
   const handleToggleHighlightKeywords = () => {
     setHighlightKeywords((prev) => {
       const next = !prev;
@@ -208,83 +230,66 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
         </div>
       )}
 
-      {/* 50-Question Tab Navigation Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-3 shadow-lg flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Left: Section Label */}
-        <div className="flex items-center space-x-2 shrink-0">
-          <Layers className="w-5 h-5 text-amber-400" />
-          <span className="font-bold text-slate-100 text-sm sm:text-base tracking-wide">Question Sets:</span>
-        </div>
-
-        {/* Set Tabs list */}
-        <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none py-1 w-full md:w-auto">
-          {Array.from({ length: totalSets }).map((_, idx) => {
-            const setNum = idx + 1;
-            const startQ = (setNum - 1) * CHUNK_SIZE + 1;
-            const endQ = setNum * CHUNK_SIZE;
-            const countInSet = questions.filter((q) => q.id >= startQ && q.id <= endQ).length;
-            const isSelected = activeSetTab === setNum;
-
-            return (
-              <button
-                key={setNum}
-                onClick={() => handleSelectSetTab(setNum)}
-                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 whitespace-nowrap min-h-[44px] ${
-                  isSelected
-                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20 ring-2 ring-amber-400'
-                    : 'bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white border border-slate-700'
-                }`}
-              >
-                <span>Set {setNum} (Q{startQ}–Q{endQ})</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${
-                  isSelected ? 'bg-slate-950 text-amber-400' : 'bg-slate-900 text-slate-400'
-                }`}>
-                  {countInSet}
-                </span>
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => handleSelectSetTab('all')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 whitespace-nowrap min-h-[44px] ${
-              activeSetTab === 'all'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20 ring-2 ring-amber-400'
-                : 'bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white border border-slate-700'
-            }`}
-          >
-            <span>All Questions ({questions.length})</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Question Dropdown Selector for Easy Navigation (Compact Space) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 sm:p-4 shadow-md space-y-2">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Dropdown Selector */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
-            <div className="flex items-center space-x-2 shrink-0">
-              <ListFilter className="w-4 h-4 text-amber-400" />
-              <label htmlFor="question-select" className="text-sm font-bold text-slate-100 whitespace-nowrap">
-                Select Question ({filteredQuestions.length}):
-              </label>
-            </div>
-            
+      {/* Space-Efficient Collapsible Navigation Bar */}
+      {isSetBarCollapsed ? (
+        /* COLLAPSED MODE: Single 36px bar combining Set Selector, Question Selector & Jump Buttons */
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-2 shadow-md flex flex-wrap items-center justify-between gap-2">
+          {/* Left: Set Selector Dropdown & Expand Pills toggle */}
+          <div className="flex items-center space-x-2 shrink-0">
+            <label htmlFor="set-select" className="text-xs font-bold text-slate-300 flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-amber-400" />
+              <span>Set:</span>
+            </label>
             <select
-              id="question-select"
+              id="set-select"
+              value={activeSetTab}
+              onChange={(e) => {
+                const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                handleSelectSetTab(val);
+              }}
+              className="bg-slate-950 border border-slate-700 text-amber-300 font-bold text-xs rounded px-2 py-1 focus:ring-1 focus:ring-amber-500 focus:outline-none cursor-pointer"
+            >
+              {Array.from({ length: totalSets }).map((_, idx) => {
+                const setNum = idx + 1;
+                const startQ = (setNum - 1) * CHUNK_SIZE + 1;
+                const endQ = setNum * CHUNK_SIZE;
+                return (
+                  <option key={setNum} value={setNum} className="bg-slate-950 text-slate-100">
+                    Set {setNum} (Q{startQ}–Q{endQ})
+                  </option>
+                );
+              })}
+              <option value="all" className="bg-slate-950 text-slate-100">
+                All Questions ({questions.length})
+              </option>
+            </select>
+
+            <button
+              onClick={toggleSetBarCollapse}
+              className="text-[10px] text-slate-400 hover:text-amber-400 font-medium flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-800/80 border border-slate-700 transition-colors"
+              title="Expand set tabs as pills"
+            >
+              <ChevronDown className="w-3 h-3" />
+              <span className="hidden sm:inline">Pills</span>
+            </button>
+          </div>
+
+          {/* Center: Question Select Dropdown */}
+          <div className="flex items-center space-x-1.5 flex-1 min-w-[200px]">
+            <select
+              id="question-select-compact"
               value={currentQuestion?.id || selectedQuestionId}
               onChange={(e) => {
                 const qId = Number(e.target.value);
                 setSelectedQuestionId(qId);
-                window.scrollTo({ top: 100, behavior: 'smooth' });
               }}
-              className="bg-slate-950 border border-slate-700 text-amber-300 font-bold text-sm sm:text-base rounded-lg px-3 py-2 w-full flex-1 focus:ring-1 focus:ring-amber-500 focus:border-amber-500 focus:outline-none min-h-[40px] shadow-inner cursor-pointer"
+              className="bg-slate-950 border border-slate-700 text-slate-200 font-medium text-xs rounded px-2 py-1 w-full focus:ring-1 focus:ring-amber-500 focus:outline-none cursor-pointer truncate"
             >
               {filteredQuestions.map((q, idx) => {
                 const qNumInSet = idx + 1;
-                const snippet = q.questionText.length > 80 ? q.questionText.slice(0, 80) + '...' : q.questionText;
+                const snippet = q.questionText.length > 60 ? q.questionText.slice(0, 60) + '...' : q.questionText;
                 return (
-                  <option key={q.id} value={q.id} className="bg-slate-950 text-slate-100 py-1">
+                  <option key={q.id} value={q.id} className="bg-slate-950 text-slate-100 py-0.5">
                     Q{q.id} (#{qNumInSet}): {snippet}
                   </option>
                 );
@@ -292,34 +297,140 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             </select>
           </div>
 
-          {/* Quick Prev / Next Jump Buttons */}
-          <div className="flex items-center space-x-2 shrink-0">
+          {/* Right: Quick Prev/Next Navigation */}
+          <div className="flex items-center space-x-1 shrink-0">
             <button
               onClick={handlePrev}
               disabled={currentQuestionIndex === 0}
-              className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 border border-slate-700 text-slate-200 text-xs sm:text-sm font-bold flex items-center space-x-1.5 transition-colors min-h-[40px]"
-              title="Previous Question"
+              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 border border-slate-700 text-slate-200 text-xs font-bold flex items-center space-x-1 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 text-amber-400" />
-              <span>Prev</span>
+              <ArrowLeft className="w-3 h-3 text-amber-400" />
+              <span className="hidden xs:inline">Prev</span>
             </button>
-            
-            <span className="text-xs sm:text-sm text-slate-300 font-mono font-bold px-1.5">
+
+            <span className="text-[11px] text-slate-400 font-mono font-bold px-1">
               {currentQuestionIndex + 1}/{filteredQuestions.length}
             </span>
 
             <button
               onClick={handleNext}
               disabled={currentQuestionIndex === filteredQuestions.length - 1}
-              className="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-slate-950 text-xs sm:text-sm font-black flex items-center space-x-1.5 transition-colors min-h-[40px] shadow-sm shadow-amber-500/20"
-              title="Next Question"
+              className="px-2 py-1 rounded bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-slate-950 text-xs font-black flex items-center space-x-1 transition-colors shadow-xs"
             >
-              <span>Next</span>
-              <ArrowRight className="w-4 h-4" />
+              <span className="hidden xs:inline">Next</span>
+              <ArrowRight className="w-3 h-3" />
             </button>
           </div>
         </div>
-      </div>
+      ) : (
+        /* EXPANDED MODE: Space-optimized pills bar + compact Question dropdown */
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 shadow-md space-y-2">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-1.5">
+            <div className="flex items-center space-x-2 shrink-0">
+              <Layers className="w-4 h-4 text-amber-400" />
+              <span className="font-bold text-slate-200 text-xs tracking-wide">Question Sets:</span>
+            </div>
+
+            <button
+              onClick={toggleSetBarCollapse}
+              className="text-[10px] text-slate-400 hover:text-amber-400 font-medium flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-800 border border-slate-700 transition-colors"
+              title="Collapse into single compact selector"
+            >
+              <ChevronUp className="w-3 h-3" />
+              <span>Compact Mode</span>
+            </button>
+          </div>
+
+          {/* Set Pills list - tight and compact */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+            {Array.from({ length: totalSets }).map((_, idx) => {
+              const setNum = idx + 1;
+              const startQ = (setNum - 1) * CHUNK_SIZE + 1;
+              const endQ = setNum * CHUNK_SIZE;
+              const countInSet = questions.filter((q) => q.id >= startQ && q.id <= endQ).length;
+              const isSelected = activeSetTab === setNum;
+
+              return (
+                <button
+                  key={setNum}
+                  onClick={() => handleSelectSetTab(setNum)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap min-h-[30px] ${
+                    isSelected
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                      : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
+                  }`}
+                >
+                  <span>Set {setNum} ({startQ}–{endQ})</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
+                    isSelected ? 'bg-slate-950 text-amber-400' : 'bg-slate-900 text-slate-400'
+                  }`}>
+                    {countInSet}
+                  </span>
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => handleSelectSetTab('all')}
+              className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap min-h-[30px] ${
+                activeSetTab === 'all'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                  : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
+              }`}
+            >
+              <span>All ({questions.length})</span>
+            </button>
+          </div>
+
+          {/* Dropdown Selector inside expanded view */}
+          <div className="pt-1.5 border-t border-slate-800/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <ListFilter className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <select
+                id="question-select"
+                value={currentQuestion?.id || selectedQuestionId}
+                onChange={(e) => {
+                  const qId = Number(e.target.value);
+                  setSelectedQuestionId(qId);
+                }}
+                className="bg-slate-950 border border-slate-700 text-slate-200 font-medium text-xs rounded px-2 py-1 w-full focus:ring-1 focus:ring-amber-500 focus:outline-none cursor-pointer truncate"
+              >
+                {filteredQuestions.map((q, idx) => {
+                  const qNumInSet = idx + 1;
+                  const snippet = q.questionText.length > 70 ? q.questionText.slice(0, 70) + '...' : q.questionText;
+                  return (
+                    <option key={q.id} value={q.id} className="bg-slate-950 text-slate-100 py-0.5">
+                      Q{q.id} (#{qNumInSet}): {snippet}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-1 shrink-0 justify-end">
+              <button
+                onClick={handlePrev}
+                disabled={currentQuestionIndex === 0}
+                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 border border-slate-700 text-slate-200 text-xs font-bold flex items-center space-x-1 transition-colors"
+              >
+                <ArrowLeft className="w-3 h-3 text-amber-400" />
+                <span>Prev</span>
+              </button>
+              <span className="text-[11px] text-slate-400 font-mono font-bold px-1">
+                {currentQuestionIndex + 1}/{filteredQuestions.length}
+              </span>
+              <button
+                onClick={handleNext}
+                disabled={currentQuestionIndex === filteredQuestions.length - 1}
+                className="px-2 py-1 rounded bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-slate-950 text-xs font-black flex items-center space-x-1 transition-colors"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Question Card Container */}
       {currentQuestion ? (
