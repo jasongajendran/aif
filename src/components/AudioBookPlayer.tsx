@@ -4,7 +4,8 @@ import { getQuestionSpokenSegments, getEnglishVoices, SpokenSegment } from '../u
 import { 
   Play, Pause, Square, SkipForward, SkipBack, Volume2, 
   VolumeX, Settings, ChevronUp, ChevronDown, Headphones, 
-  Sparkles, CheckCircle, HelpCircle, Layers, Check, X, RotateCcw
+  Sparkles, CheckCircle, HelpCircle, Layers, Check, X, RotateCcw,
+  ListOrdered, CheckCircle2, ListFilter
 } from 'lucide-react';
 
 export interface AudioBookPlayerProps {
@@ -20,6 +21,7 @@ export interface AudioBookPlayerProps {
 const CHUNK_SIZE = 50;
 const STORAGE_KEY_VOICE_NAME = 'aif_c01_audiobook_voice_v1';
 const STORAGE_KEY_SPEED = 'aif_c01_audiobook_speed_v1';
+const STORAGE_KEY_READ_ALL_OPTIONS = 'aif_c01_audiobook_read_all_options_v1';
 
 export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
   questions,
@@ -38,6 +40,16 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [autoSyncView, setAutoSyncView] = useState<boolean>(true);
+
+  // Toggle mode: Read all options (A, B, C, D) first before correct answer, or correct option alone
+  const [readAllOptions, setReadAllOptions] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_READ_ALL_OPTIONS);
+      return saved !== null ? saved === 'true' : true; // Default to true as user requested "Read all answers and then finally after reading out all answer options, then say the correct option"
+    } catch {
+      return true;
+    }
+  });
 
   // Speed and Voice
   const [playbackRate, setPlaybackRate] = useState<number>(() => {
@@ -76,6 +88,9 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
   const currentSegmentsRef = useRef<SpokenSegment[]>([]);
   currentSegmentsRef.current = currentSegments;
+
+  const readAllOptionsRef = useRef<boolean>(readAllOptions);
+  readAllOptionsRef.current = readAllOptions;
 
   const rateRef = useRef<number>(playbackRate);
   rateRef.current = playbackRate;
@@ -126,6 +141,14 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   }, [selectedVoiceName]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_READ_ALL_OPTIONS, String(readAllOptions));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [readAllOptions]);
+
   // Stop Speech
   const stopAudio = useCallback(() => {
     sessionEpochRef.current += 1;
@@ -158,7 +181,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       const nextQIdx = qIdx + 1;
       if (nextQIdx < setQuestions.length) {
         const nextQ = setQuestions[nextQIdx];
-        const nextSegments = getQuestionSpokenSegments(nextQ);
+        const nextSegments = getQuestionSpokenSegments(nextQ, readAllOptionsRef.current);
         setCurrentPlaybackQIndex(nextQIdx);
         setCurrentSegmentIndex(0);
         setCurrentSegments(nextSegments);
@@ -256,7 +279,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     const startQ = setQuestions[foundIndex] || setQuestions[0];
     if (!startQ) return;
 
-    const segments = getQuestionSpokenSegments(startQ);
+    const segments = getQuestionSpokenSegments(startQ, readAllOptionsRef.current);
     setCurrentPlaybackQIndex(foundIndex);
     setCurrentSegmentIndex(0);
     setCurrentSegments(segments);
@@ -295,7 +318,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     const q = setQuestions[currentQIndexRef.current] || setQuestions[0];
     if (!q) return;
 
-    const segments = getQuestionSpokenSegments(q);
+    const segments = getQuestionSpokenSegments(q, readAllOptionsRef.current);
     setCurrentSegmentIndex(0);
     setCurrentSegments(segments);
 
@@ -315,6 +338,36 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       speakCurrentSegment(newEpoch);
     }, 60);
   }, [setQuestions, autoSyncView, onSelectQuestionId, speakCurrentSegment]);
+
+  // Handle Mode Change (All Options vs Correct Only)
+  const handleToggleReadAllOptions = (value: boolean) => {
+    setReadAllOptions(value);
+    readAllOptionsRef.current = value;
+
+    const q = setQuestions[currentQIndexRef.current] || setQuestions[0];
+    if (q) {
+      const segs = getQuestionSpokenSegments(q, value);
+      setCurrentSegments(segs);
+      currentSegmentsRef.current = segs;
+
+      // If playing actively, restart the current question with new mode seamlessly
+      if (isPlayingRef.current && !isPausedRef.current) {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        const newEpoch = ++sessionEpochRef.current;
+        setCurrentSegmentIndex(0);
+        currentSegIndexRef.current = 0;
+        timerRef.current = setTimeout(() => {
+          speakCurrentSegment(newEpoch);
+        }, 60);
+      }
+    }
+  };
 
   // Pause / Resume toggle
   const togglePlayPause = () => {
@@ -371,7 +424,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       if (q) {
         setCurrentPlaybackQIndex(foundIndex);
         setCurrentSegmentIndex(0);
-        const segments = getQuestionSpokenSegments(q);
+        const segments = getQuestionSpokenSegments(q, readAllOptionsRef.current);
         setCurrentSegments(segments);
         currentQIndexRef.current = foundIndex;
         currentSegIndexRef.current = 0;
@@ -434,9 +487,9 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
       {/* Main Bar Content */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           
-          {/* Left Column: Set Badge, Playing Question Info & Live Caption */}
+          {/* Left Column: Set Badge, Playing Question Info, Narration Mode & Live Caption */}
           <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 transition-all ${
               isPlaying && !isPaused
@@ -454,9 +507,18 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                 <span className="text-slate-400">
                   Question {currentPlaybackQIndex + 1} of {setQuestions.length}
                 </span>
+
+                {/* Mode Indicator Tag */}
+                <span className="bg-slate-800/80 text-slate-300 border border-slate-700 px-1.5 py-0.5 rounded text-[10px]">
+                  {readAllOptions ? 'Mode: All Options (A–D)' : 'Mode: Correct Alone'}
+                </span>
+
+                {/* Active Segment Pill */}
                 {activeSegment && (
                   <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-black ${
-                    activeSegment.type === 'correctAnswer'
+                    activeSegment.type === 'option'
+                      ? 'bg-amber-400/20 text-amber-300 border border-amber-400/50'
+                      : activeSegment.type === 'correctAnswer'
                       ? 'bg-emerald-500 text-slate-950 shadow-xs'
                       : activeSegment.type === 'explanation'
                       ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
@@ -475,7 +537,10 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                   <span>{activeSegment.text}</span>
                 ) : (
                   <span className="text-slate-400">
-                    Ready to read Set Questions, Correct Answers alone & Explanations
+                    {readAllOptions 
+                      ? 'Ready to read: Question -> All Options (A-D) -> Correct Answer -> Explanation & Tip'
+                      : 'Ready to read: Question -> Correct Answer Alone -> Explanation & Tip'
+                    }
                   </span>
                 )}
               </div>
@@ -557,8 +622,46 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
             )}
           </div>
 
-          {/* Right Column: Speed, Voice Settings & Expand Transcript */}
-          <div className="flex items-center justify-between sm:justify-end space-x-2 shrink-0">
+          {/* Right Column: Mode Toggle, Speed, Voice Settings & Expand Transcript */}
+          <div className="flex items-center justify-between sm:justify-end flex-wrap gap-2 shrink-0">
+            
+            {/* Direct Options Mode Switcher Toggle */}
+            <div 
+              id="audiobook-mode-toggle-group"
+              className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-0.5 text-[11px] font-bold shadow-inner"
+              title="Select whether to read all answer options or only the correct answer"
+            >
+              <button
+                id="audiobook-mode-all-options-btn"
+                onClick={() => handleToggleReadAllOptions(true)}
+                className={`px-2.5 py-1 rounded-md flex items-center space-x-1 transition-all cursor-pointer ${
+                  readAllOptions
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Read Question -> All Options (A, B, C, D) -> Correct Option -> Explanation & Tip"
+              >
+                <ListOrdered className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">All Options</span>
+                <span className="sm:hidden">All (A-D)</span>
+              </button>
+
+              <button
+                id="audiobook-mode-correct-alone-btn"
+                onClick={() => handleToggleReadAllOptions(false)}
+                className={`px-2.5 py-1 rounded-md flex items-center space-x-1 transition-all cursor-pointer ${
+                  !readAllOptions
+                    ? 'bg-emerald-500 text-slate-950 font-black shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Read Question -> Correct Answer Alone -> Explanation & Tip"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Correct Alone</span>
+                <span className="sm:hidden">Correct</span>
+              </button>
+            </div>
+
             {/* Speed Selector */}
             <div className="flex items-center space-x-1 bg-slate-950 border border-slate-800 rounded-lg p-1">
               <span className="text-[10px] font-mono text-slate-400 px-1">Speed:</span>
@@ -583,7 +686,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
               </select>
             </div>
 
-            {/* Settings Toggle (Voice, Auto-sync) */}
+            {/* Settings Toggle (Voice, Auto-sync, Mode) */}
             <button
               id="audiobook-btn-settings"
               onClick={() => setShowSettings((prev) => !prev)}
@@ -592,7 +695,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                   ? 'bg-amber-500 text-slate-950 border-amber-400'
                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
               }`}
-              title="Voice and playback options"
+              title="Audiobook Voice and playback settings"
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -625,11 +728,11 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
           </div>
         </div>
 
-        {/* Settings Drawer (Voice Selector & Auto-Sync Switch) */}
+        {/* Settings Drawer */}
         {showSettings && (
-          <div className="mt-3 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-950/80 p-3 rounded-xl">
+          <div className="mt-3 pt-3 border-t border-slate-800 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 text-xs bg-slate-950/80 p-3 rounded-xl">
             {/* Voice selection */}
-            <div className="flex items-center space-x-2 flex-1 min-w-[240px]">
+            <div className="flex items-center space-x-2 flex-1 min-w-[220px]">
               <label htmlFor="audiobook-voice-select" className="font-bold text-slate-300 whitespace-nowrap">
                 Narrator Voice:
               </label>
@@ -647,6 +750,21 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
               </select>
             </div>
 
+            {/* Answer Options Reading Mode in Settings */}
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-slate-300">Answer Options:</span>
+              <button
+                onClick={() => handleToggleReadAllOptions(!readAllOptions)}
+                className={`px-3 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                  readAllOptions
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                }`}
+              >
+                {readAllOptions ? '✓ Read All Options First (A, B, C, D)' : '⚡ Correct Answer Alone'}
+              </button>
+            </div>
+
             {/* Auto-sync UI toggle */}
             <label className="flex items-center space-x-2 text-slate-300 font-medium cursor-pointer">
               <input
@@ -662,31 +780,51 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
         {/* Expanded Script / Question Preview Drawer */}
         {isExpanded && currentPlayingQ && (
-          <div className="mt-3 pt-3 border-t border-slate-800 max-h-48 overflow-y-auto pr-1 space-y-2 text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-800 max-h-56 overflow-y-auto pr-1 space-y-2 text-xs">
             <div className="flex items-center justify-between text-slate-400 font-bold border-b border-slate-800 pb-1">
-              <span>Narrated Content for Question {currentPlayingQ.id} (Correct Answer & Explanation Alone)</span>
+              <span>
+                Narrated Script for Question {currentPlayingQ.id} {readAllOptions ? '(All Options -> Correct Answer -> Explanation & Tip)' : '(Correct Answer Alone -> Explanation & Tip)'}
+              </span>
               <span className="font-mono text-amber-400">{currentPlayingQ.domain}</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-300">
-              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+              {/* Question & Options Column */}
+              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
                 <span className="text-amber-400 font-bold uppercase tracking-wider text-[10px] block">
-                  Question & Context
+                  Question Prompt {readAllOptions && '& All Answer Options'}
                 </span>
-                <p className="line-clamp-3 text-slate-200">{currentPlayingQ.scenario || currentPlayingQ.questionText}</p>
+                <p className="text-slate-200 line-clamp-3">{currentPlayingQ.scenario || currentPlayingQ.questionText}</p>
+
+                {readAllOptions && currentPlayingQ.options && (
+                  <div className="space-y-1 pt-1 border-t border-slate-800/80">
+                    {currentPlayingQ.options.map((opt) => (
+                      <div key={opt.id} className="text-[11px] flex items-start space-x-1 text-slate-300">
+                        <span className="font-bold text-amber-400 shrink-0">{opt.id}:</span>
+                        <span className="line-clamp-2">{opt.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+              {/* Correct Answer & Explanation Column */}
+              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
                 <span className="text-emerald-400 font-bold uppercase tracking-wider text-[10px] block">
-                  Correct Answer & Explanation (Spoken Script)
+                  Correct Answer, Explanation & Exam Tip
                 </span>
-                <p className="text-emerald-300 font-medium">
+                <p className="text-emerald-300 font-medium text-xs">
                   {Array.isArray(currentPlayingQ.correctOption) 
                     ? `Options ${currentPlayingQ.correctOption.join(', ')}: ${currentPlayingQ.correctOptionText}`
                     : `Option ${currentPlayingQ.correctOption}: ${currentPlayingQ.correctOptionText}`
                   }
                 </p>
-                <p className="text-slate-300 line-clamp-2">{currentPlayingQ.explanation}</p>
+                <p className="text-slate-300 text-[11px] line-clamp-3">{currentPlayingQ.explanation}</p>
+                {currentPlayingQ.examTip && (
+                  <p className="text-purple-300 text-[11px] italic bg-purple-950/30 p-1.5 rounded border border-purple-900/50">
+                    <strong className="font-bold">Exam Tip:</strong> {currentPlayingQ.examTip}
+                  </p>
+                )}
               </div>
             </div>
           </div>

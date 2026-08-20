@@ -2,7 +2,7 @@ import { Question } from '../types';
 
 export interface SpokenSegment {
   id: string;
-  type: 'header' | 'scenario' | 'question' | 'correctAnswer' | 'explanation' | 'examTip' | 'example';
+  type: 'header' | 'scenario' | 'question' | 'option' | 'correctAnswer' | 'explanation' | 'examTip' | 'example';
   label: string;
   text: string;
 }
@@ -25,11 +25,11 @@ export function cleanTextForSpeech(text: string): string {
 }
 
 /**
- * Generates the sequential spoken segments for a question,
- * strictly starting directly with Question, then correct answers alone, and explanations alone.
- * Topic and domain preambles are omitted as requested.
+ * Generates the sequential spoken segments for a question.
+ * Supports reading all answer options first (A, B, C, D) or jumping directly to the correct answer alone.
+ * In both cases, explanation and exam tip follow.
  */
-export function getQuestionSpokenSegments(q: Question): SpokenSegment[] {
+export function getQuestionSpokenSegments(q: Question, readAllOptions: boolean = false): SpokenSegment[] {
   const segments: SpokenSegment[] = [];
 
   // 1. Direct Question Start (No Topic / Domain announcement)
@@ -60,7 +60,19 @@ export function getQuestionSpokenSegments(q: Question): SpokenSegment[] {
     });
   }
 
-  // 2. Correct Answer Alone
+  // 2. Read All Answer Options (if toggle is enabled)
+  if (readAllOptions && q.options && q.options.length > 0) {
+    q.options.forEach((opt) => {
+      segments.push({
+        id: `q-${q.id}-opt-${opt.id}`,
+        type: 'option',
+        label: `Option ${opt.id}`,
+        text: `Option ${opt.id}: ${cleanTextForSpeech(opt.text)}`,
+      });
+    });
+  }
+
+  // 3. Correct Answer
   let answerSpeech = '';
   if (Array.isArray(q.correctOption)) {
     const optionPhrases = q.correctOption.map((optId) => {
@@ -78,21 +90,21 @@ export function getQuestionSpokenSegments(q: Question): SpokenSegment[] {
   segments.push({
     id: `q-${q.id}-answer`,
     type: 'correctAnswer',
-    label: 'Correct Answer Alone',
+    label: readAllOptions ? 'Correct Answer' : 'Correct Answer Alone',
     text: cleanTextForSpeech(answerSpeech),
   });
 
-  // 3. Correct Answer Explanation Alone
+  // 4. Correct Answer Explanation
   if (q.explanation && q.explanation.trim().length > 0) {
     segments.push({
       id: `q-${q.id}-explanation`,
       type: 'explanation',
-      label: 'Explanation Alone',
+      label: 'Explanation',
       text: `Explanation: ${cleanTextForSpeech(q.explanation)}`,
     });
   }
 
-  // 4. Exam Tip for Memory Anchor (if available)
+  // 5. Exam Tip for Memory Anchor (if available)
   if (q.examTip && q.examTip.trim().length > 0) {
     segments.push({
       id: `q-${q.id}-examtip`,

@@ -77,7 +77,7 @@ export const SetAudioBookModal: React.FC<SetAudioBookModalProps> = ({
                 </span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-300">
-                Narrates questions, <strong className="text-emerald-400 font-bold">correct answers alone</strong>, and concise explanations for hands-free audio revision.
+                Narrates questions, <strong className="text-amber-400 font-bold">all answer options (A–D)</strong> or <strong className="text-emerald-400 font-bold">correct answer alone</strong>, followed by detailed explanations and exam tips.
               </p>
             </div>
           </div>
