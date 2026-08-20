@@ -5,8 +5,10 @@ import {
   CheckCircle2, XCircle, ArrowLeft, ArrowRight, Lightbulb, 
   Eye, EyeOff, Sparkles, Check,
   ArrowUp, Layers, ListFilter, Grid, ChevronDown, ChevronUp,
-  RotateCcw
+  RotateCcw, Headphones, Volume2, Play
 } from 'lucide-react';
+import { AudioBookPlayer } from './AudioBookPlayer';
+import { SetAudioBookModal } from './SetAudioBookModal';
 
 interface McqPracticeViewProps {
   questions: Question[];
@@ -108,6 +110,22 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
       }
       return next;
     });
+  };
+
+  // Set Audiobook Player & Modal State
+  const [isAudioBookOpen, setIsAudioBookOpen] = useState<boolean>(false);
+  const [isAudioBookModalOpen, setIsAudioBookModalOpen] = useState<boolean>(false);
+
+  const handleStartSetAudioBook = (setNum: number | 'all', targetQId?: number) => {
+    handleSelectSetTab(setNum);
+    if (targetQId) {
+      setSelectedQuestionId(targetQId);
+    }
+    setIsAudioBookOpen(true);
+  };
+
+  const handleToggleAudioBookPlayer = () => {
+    setIsAudioBookOpen((prev) => !prev);
   };
 
   // Monitor window scroll for Go To Top icon
@@ -220,7 +238,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   };
 
   return (
-    <div className="w-full px-2 sm:px-4 lg:px-6 py-4 space-y-4 relative">
+    <div className={`w-full px-2 sm:px-4 lg:px-6 py-4 space-y-4 relative ${isAudioBookOpen ? 'pb-36' : ''}`}>
       
       {/* Return to Origin Banner (Shown when navigated from a Visualizer or Ready Reckoner) */}
       {navigationOrigin && onReturnToOrigin && (
@@ -291,6 +309,17 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               <ChevronDown className="w-3 h-3" />
               <span className="hidden sm:inline">Pills</span>
             </button>
+
+            {/* Compact Mode Audiobook Hub Button */}
+            <button
+              id="compact-audiobook-btn"
+              onClick={() => handleStartSetAudioBook(activeSetTab)}
+              className="text-[11px] text-slate-950 font-black flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-400 shadow-xs transition-all cursor-pointer"
+              title="Listen to Set Audiobook"
+            >
+              <Headphones className="w-3.5 h-3.5" />
+              <span>Audiobook</span>
+            </button>
           </div>
 
           {/* Center: Question Select Dropdown */}
@@ -344,20 +373,44 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
       ) : (
         /* EXPANDED MODE: Space-optimized pills bar + compact Question dropdown */
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 shadow-md space-y-2">
-          <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-1.5">
             <div className="flex items-center space-x-2 shrink-0">
               <Layers className="w-4 h-4 text-amber-400" />
               <span className="font-bold text-slate-200 text-xs tracking-wide">Question Sets:</span>
             </div>
 
-            <button
-              onClick={toggleSetBarCollapse}
-              className="text-[10px] text-slate-400 hover:text-amber-400 font-medium flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-800 border border-slate-700 transition-colors"
-              title="Collapse into single compact selector"
-            >
-              <ChevronUp className="w-3 h-3" />
-              <span>Compact Mode</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Listen to current active set */}
+              <button
+                id="set-audiobook-btn"
+                onClick={() => handleStartSetAudioBook(activeSetTab)}
+                className="text-[11px] text-slate-950 font-black flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-amber-500 hover:bg-amber-400 shadow-sm transition-all cursor-pointer"
+                title={`Listen to Set ${activeSetTab === 'all' ? 'All' : activeSetTab} Audiobook (Questions, Correct Answers alone & Explanations)`}
+              >
+                <Headphones className="w-3.5 h-3.5" />
+                <span>Set {activeSetTab === 'all' ? 'All' : activeSetTab} Audiobook</span>
+              </button>
+
+              {/* Browse All Set Audiobooks */}
+              <button
+                id="all-sets-audiobook-modal-btn"
+                onClick={() => setIsAudioBookModalOpen(true)}
+                className="text-[11px] text-amber-300 hover:text-amber-200 font-bold flex items-center space-x-1 px-2 py-1 rounded-md bg-slate-800 border border-slate-700 hover:border-amber-500/40 transition-colors cursor-pointer"
+                title="Browse all 9 Set Audiobooks & Marathon"
+              >
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>All Audiobooks</span>
+              </button>
+
+              <button
+                onClick={toggleSetBarCollapse}
+                className="text-[10px] text-slate-400 hover:text-amber-400 font-medium flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-800 border border-slate-700 transition-colors cursor-pointer"
+                title="Collapse into single compact selector"
+              >
+                <ChevronUp className="w-3 h-3" />
+                <span>Compact</span>
+              </button>
+            </div>
           </div>
 
           {/* Set Pills list - tight and compact */}
@@ -475,6 +528,19 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {/* Question Listen Audiobook Button */}
+              <button
+                id="card-audiobook-listen-btn"
+                onClick={() => {
+                  handleStartSetAudioBook(activeSetTab, currentQuestion.id);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 hover:text-amber-200 text-xs font-bold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer"
+                title="Listen to Set Audiobook starting from this question"
+              >
+                <Headphones className="w-3.5 h-3.5 text-amber-400" />
+                <span>Audiobook</span>
+              </button>
+
               {navigationOrigin && onReturnToOrigin && (
                 <button
                   onClick={onReturnToOrigin}
@@ -756,12 +822,36 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
         <button
           onClick={scrollToTop}
           aria-label="Scroll to top"
-          className="fixed bottom-6 right-6 z-50 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 p-4 rounded-full shadow-2xl shadow-amber-500/40 border-2 border-slate-900 transition-all duration-200 flex items-center justify-center group"
+          className={`fixed right-6 z-50 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 p-4 rounded-full shadow-2xl shadow-amber-500/40 border-2 border-slate-900 transition-all duration-200 flex items-center justify-center group ${
+            isAudioBookOpen ? 'bottom-28' : 'bottom-6'
+          }`}
           title="Go to Top"
         >
           <ArrowUp className="w-6 h-6 font-bold group-hover:-translate-y-0.5 transition-transform" />
         </button>
       )}
+
+      {/* Set Audiobooks Selection Modal */}
+      <SetAudioBookModal
+        isOpen={isAudioBookModalOpen}
+        onClose={() => setIsAudioBookModalOpen(false)}
+        questions={questions}
+        activeSetTab={activeSetTab}
+        onStartSetAudioBook={(setNum) => {
+          handleStartSetAudioBook(setNum);
+        }}
+      />
+
+      {/* Bottom Sticky Set Audiobook Player Bar */}
+      <AudioBookPlayer
+        isOpen={isAudioBookOpen}
+        questions={questions}
+        currentQuestionId={currentQuestion?.id || selectedQuestionId}
+        onSelectQuestionId={(id) => setSelectedQuestionId(id)}
+        activeSetTab={activeSetTab}
+        onSelectSetTab={(setNum) => handleSelectSetTab(setNum)}
+        onClose={() => setIsAudioBookOpen(false)}
+      />
 
     </div>
   );
