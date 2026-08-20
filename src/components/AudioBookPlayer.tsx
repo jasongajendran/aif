@@ -70,8 +70,9 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   });
 
-  // Track active utterance and session generation to prevent stale callbacks and ensure clean replays
+  // Track active utterance, chunk safety timer, and session generation to prevent stale callbacks and ensure clean replays on mobile
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const chunkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionEpochRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlayingRef = useRef<boolean>(false);
@@ -106,13 +107,21 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     return questions.filter((q) => q.id >= startQ && q.id <= endQ);
   }, [questions, activeSetTab]);
 
-  // Load browser voices
+  // Load browser voices & select best natural voice by default
   useEffect(() => {
     const updateVoices = () => {
       const voices = getEnglishVoices();
       setAvailableVoices(voices);
-      if (voices.length > 0 && !selectedVoiceName) {
-        setSelectedVoiceName(voices[0].name);
+
+      if (voices.length > 0) {
+        const storedName = voiceNameRef.current;
+        const exists = voices.some((v) => v.name === storedName);
+        if (!storedName || !exists) {
+          // Select top-ranked natural/neural voice automatically
+          const bestVoice = voices[0];
+          setSelectedVoiceName(bestVoice.name);
+          voiceNameRef.current = bestVoice.name;
+        }
       }
     };
 
@@ -120,7 +129,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.onvoiceschanged = updateVoices;
     }
-  }, [selectedVoiceName]);
+  }, []);
 
   // Save preferences
   useEffect(() => {
@@ -156,21 +165,33 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    if (chunkTimeoutRef.current) {
+      clearTimeout(chunkTimeoutRef.current);
+      chunkTimeoutRef.current = null;
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     activeUtteranceRef.current = null;
+    if (typeof window !== 'undefined') {
+      (window as any).__activeSpeechUtterance = null;
+    }
     setIsPlaying(false);
     setIsPaused(false);
     isPlayingRef.current = false;
     isPausedRef.current = false;
   }, []);
 
-  // Play next segment or advance to next question with generation epoch guard
+  // Play next segment or advance to next question with generation epoch guard & mobile safety timeouts
   const speakCurrentSegment = useCallback((epoch: number) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     if (epoch !== sessionEpochRef.current) return;
     if (!isPlayingRef.current || isPausedRef.current) return;
+
+    if (chunkTimeoutRef.current) {
+      clearTimeout(chunkTimeoutRef.current);
+      chunkTimeoutRef.current = null;
+    }
 
     const segments = currentSegmentsRef.current;
     const segIdx = currentSegIndexRef.current;
@@ -199,7 +220,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
           if (epoch === sessionEpochRef.current && isPlayingRef.current && !isPausedRef.current) {
             speakCurrentSegment(epoch);
           }
-        }, 750);
+        }, 650);
       } else {
         // Completed the whole Set!
         stopAudio();
@@ -211,18 +232,33 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(currentSeg.text);
-    utterance.rate = rateRef.current;
+    
+    // Clamp rate between 0.85 and 1.15 for clean, un-distorted audio on iOS and Android
+    const clampedRate = Math.max(0.85, Math.min(1.15, rateRef.current));
+    utterance.rate = clampedRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
 
-    // Attach voice if selected
+    // Attach voice if selected or fallback to high-scoring English voice
     if (voiceNameRef.current) {
       const voice = availableVoices.find((v) => v.name === voiceNameRef.current);
       if (voice) {
         utterance.voice = voice;
+        utterance.lang = voice.lang || 'en-GB';
+      } else {
+        utterance.lang = 'en-GB';
       }
+    } else {
+      utterance.lang = 'en-GB';
     }
 
-    utterance.onend = () => {
+    const handleAdvanceNextChunk = () => {
+      if (chunkTimeoutRef.current) {
+        clearTimeout(chunkTimeoutRef.current);
+        chunkTimeoutRef.current = null;
+      }
       if (epoch !== sessionEpochRef.current || !isPlayingRef.current || isPausedRef.current) return;
+
       // Advance to next segment
       const nextSeg = segIdx + 1;
       setCurrentSegmentIndex(nextSeg);
@@ -233,27 +269,38 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
         if (epoch === sessionEpochRef.current && isPlayingRef.current && !isPausedRef.current) {
           speakCurrentSegment(epoch);
         }
-      }, 300);
+      }, 180);
+    };
+
+    utterance.onend = () => {
+      handleAdvanceNextChunk();
     };
 
     utterance.onerror = (e) => {
       if (epoch !== sessionEpochRef.current) return;
-      if (e.error !== 'canceled' && e.error !== 'interrupted' && isPlayingRef.current && !isPausedRef.current) {
+      if (e.error !== 'canceled' && e.error !== 'interrupted') {
         console.warn('SpeechSynthesis error:', e);
-        const nextSeg = segIdx + 1;
-        setCurrentSegmentIndex(nextSeg);
-        currentSegIndexRef.current = nextSeg;
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-          if (epoch === sessionEpochRef.current && isPlayingRef.current && !isPausedRef.current) {
-            speakCurrentSegment(epoch);
-          }
-        }, 200);
+        handleAdvanceNextChunk();
       }
     };
 
+    // Keep global reference to prevent Garbage Collection on Mobile Safari / Android Chrome
     activeUtteranceRef.current = utterance;
+    (window as any).__activeSpeechUtterance = utterance;
+
     window.speechSynthesis.speak(utterance);
+
+    // Mobile Watchdog: If onend fails to fire after expected chunk duration, advance safely
+    const expectedDurationMs = Math.max(3800, Math.ceil((currentSeg.text.length / 12) * 1000) + 2000);
+    chunkTimeoutRef.current = setTimeout(() => {
+      if (epoch === sessionEpochRef.current && isPlayingRef.current && !isPausedRef.current) {
+        console.warn('Chunk safety timer triggered for mobile:', currentSeg.text);
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        handleAdvanceNextChunk();
+      }
+    }, expectedDurationMs);
   }, [setQuestions, autoSyncView, onSelectQuestionId, stopAudio, availableVoices]);
 
   // Start / Play Audiobook for target question
@@ -433,20 +480,6 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   }, [currentQuestionId, setQuestions]);
 
-  // Keep-alive watchdog timer for Chrome's SpeechSynthesis bug (speech synthesis pauses after 14 seconds)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isPlayingRef.current && !isPausedRef.current && 'speechSynthesis' in window) {
-        if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-          window.speechSynthesis.pause();
-          window.speechSynthesis.resume();
-        }
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -454,8 +487,15 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
+      if (chunkTimeoutRef.current) {
+        clearTimeout(chunkTimeoutRef.current);
+        chunkTimeoutRef.current = null;
+      }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
+      }
+      if (typeof window !== 'undefined') {
+        (window as any).__activeSpeechUtterance = null;
       }
     };
   }, []);
