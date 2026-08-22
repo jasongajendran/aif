@@ -148,8 +148,9 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
             expEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
           }
-        } else if (targetType === 'explanation') {
-          const expEl = document.getElementById('current-question-explanation-box') || 
+        } else if (targetType === 'explanation' || targetType === 'example') {
+          const expEl = document.getElementById('current-question-example-box') ||
+                        document.getElementById('current-question-explanation-box') || 
                         document.getElementById('current-question-explanation');
           if (expEl) {
             expEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1332,6 +1333,11 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                     }
                   </p>
                   <p className="text-slate-300 text-[11px] line-clamp-3">{currentPlayingQ.explanation}</p>
+                  {currentPlayingQ.example && (
+                    <p className="text-emerald-400/90 text-[10px] leading-tight pt-1">
+                      <strong className="text-emerald-300">For example:</strong> {currentPlayingQ.example}
+                    </p>
+                  )}
                   {readWhyWrong && currentPlayingQ.wrongOptionsExplanation && (
                     <div className="pt-1.5 border-t border-slate-800/80 space-y-1">
                       <span className="text-rose-400 font-bold text-[10px] uppercase tracking-wider block">

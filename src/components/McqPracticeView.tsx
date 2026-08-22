@@ -590,22 +590,16 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           {/* Scenario Context Block */}
           <div 
             id="current-question-scenario-box"
-            className={`border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 mb-4 text-slate-100 text-sm sm:text-base leading-relaxed font-sans shadow-inner transition-all duration-200 scroll-mt-28 ${
+            className={`border-l-4 rounded-r-xl p-3 sm:p-4 mb-4 text-slate-100 text-sm sm:text-base leading-relaxed font-sans shadow-inner transition-all duration-200 scroll-mt-28 ${
               activeAudioSegment?.type === 'scenario'
-                ? 'bg-amber-950/80 border-amber-400 ring-2 ring-amber-400 shadow-xl shadow-amber-500/20'
-                : 'bg-slate-950/90'
+                ? 'border-amber-400 ring-2 ring-amber-400/80 bg-slate-950/95 shadow-lg shadow-amber-500/10'
+                : 'border-amber-500 bg-slate-950/90'
             }`}
           >
             <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-900">
               <div className="flex items-center space-x-2 text-amber-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Scenario Context</span>
-                {activeAudioSegment?.type === 'scenario' && (
-                  <span className="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded flex items-center gap-1 animate-pulse">
-                    <Volume2 className="w-3 h-3" />
-                    <span>NARRATING SCENARIO</span>
-                  </span>
-                )}
                 {highlightKeywords && (
                   <span className="hidden sm:inline-block bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
                     Keywords Highlighted
@@ -647,17 +641,11 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
             id="current-question-text-box"
             className={`transition-all duration-200 scroll-mt-28 mb-4 rounded-xl ${
               activeAudioSegment?.type === 'question'
-                ? 'bg-amber-500/15 p-3.5 ring-2 ring-amber-400 border border-amber-400/40 shadow-xl shadow-amber-500/20'
+                ? 'p-3 ring-2 ring-amber-400 border border-amber-400/80 shadow-lg shadow-amber-500/10'
                 : ''
             }`}
           >
-            {activeAudioSegment?.type === 'question' && (
-              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-black text-[10px] animate-pulse w-fit mb-2">
-                <Volume2 className="w-3 h-3" />
-                <span>NARRATING QUESTION</span>
-              </div>
-            )}
-            <h2 className={`text-base sm:text-lg md:text-xl font-bold leading-snug tracking-tight ${activeAudioSegment?.type === 'question' ? 'text-amber-100' : 'text-white'}`}>
+            <h2 className="text-base sm:text-lg md:text-xl font-bold leading-snug tracking-tight text-white">
               <HighlightedExamText
                 text={currentQuestion.questionText}
                 clues={currentQuestion.keywordClues}
@@ -685,10 +673,10 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               let badgeStyle = 'bg-slate-800 border-slate-600 text-slate-200';
 
               if (isOptionSpeaking) {
-                optionStyle = 'bg-amber-500/25 border-amber-400 text-white ring-2 ring-amber-400 scale-[1.015] shadow-xl shadow-amber-500/25 font-semibold';
+                optionStyle = 'bg-slate-800/90 border-amber-400 text-white ring-2 ring-amber-400 shadow-lg shadow-amber-500/20 font-semibold';
                 badgeStyle = 'bg-amber-400 text-slate-950 font-black ring-2 ring-amber-300';
               } else if (isAnswerSpeaking) {
-                optionStyle = 'bg-emerald-950/90 border-emerald-400 text-emerald-50 ring-2 ring-emerald-400 font-bold shadow-xl shadow-emerald-950/60 scale-[1.015]';
+                optionStyle = 'bg-emerald-950/90 border-emerald-400 text-emerald-50 ring-2 ring-emerald-400 font-bold shadow-xl shadow-emerald-950/60';
                 badgeStyle = 'bg-emerald-500 text-slate-950 font-black ring-2 ring-emerald-300';
               } else if (isRevealed) {
                 if (isCorrectOption) {
@@ -720,27 +708,13 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                     {option.text}
                   </span>
 
-                  {isOptionSpeaking && (
-                    <div className="flex items-center space-x-1.5 bg-amber-400 text-slate-950 text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-lg flex-shrink-0 shadow-md animate-pulse">
-                      <Volume2 className="w-3.5 h-3.5" />
-                      <span>READING OPTION</span>
-                    </div>
-                  )}
-
-                  {isAnswerSpeaking && !isOptionSpeaking && (
-                    <div className="flex items-center space-x-1.5 bg-emerald-400 text-slate-950 text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-lg flex-shrink-0 shadow-md animate-pulse">
-                      <Volume2 className="w-3.5 h-3.5" />
-                      <span>CORRECT ANSWER</span>
-                    </div>
-                  )}
-
-                  {!isOptionSpeaking && !isAnswerSpeaking && isRevealed && isCorrectOption && (
+                  {isRevealed && isCorrectOption && (
                     <div className="flex items-center space-x-1.5 bg-emerald-500 text-slate-950 text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg flex-shrink-0 shadow-sm">
                       <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">CORRECT</span>
                     </div>
                   )}
-                  {!isOptionSpeaking && !isAnswerSpeaking && isSelected && !isCorrectOption && isRevealed && (
+                  {isSelected && !isCorrectOption && isRevealed && (
                     <div className="flex items-center space-x-1.5 bg-rose-500 text-white text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg flex-shrink-0 shadow-sm">
                       <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">YOUR PICK</span>
@@ -790,20 +764,21 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                 id="current-question-explanation-box"
                 className={`rounded-xl p-4 sm:p-5 space-y-3 scroll-mt-28 transition-all duration-200 ${
                   activeAudioSegment?.type === 'explanation'
-                    ? 'bg-emerald-950/90 border-2 border-emerald-400 ring-2 ring-emerald-400 shadow-2xl shadow-emerald-950/70 scale-[1.005]'
+                    ? 'bg-emerald-950/60 border-2 border-emerald-400 ring-2 ring-emerald-400/80 shadow-xl shadow-emerald-950/50'
                     : 'bg-emerald-950/40 border border-emerald-800/80'
                 }`}
               >
-                {activeAudioSegment?.type === 'explanation' && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-black text-xs animate-pulse inline-flex mb-1">
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>NARRATING EXPLANATION</span>
-                  </div>
-                )}
                 <p className="text-sm sm:text-base text-emerald-100 leading-relaxed font-medium">
                   {currentQuestion.explanation}
                 </p>
-                <div className="bg-emerald-950/90 border border-emerald-800 rounded-lg p-3 text-xs sm:text-sm text-emerald-200 space-y-1">
+                <div 
+                  id="current-question-example-box"
+                  className={`border rounded-lg p-3 text-xs sm:text-sm text-emerald-200 space-y-1 transition-all duration-200 scroll-mt-28 ${
+                    activeAudioSegment?.type === 'example'
+                      ? 'bg-emerald-950 border-2 border-emerald-400 ring-2 ring-emerald-400/80 shadow-lg shadow-emerald-950/50'
+                      : 'bg-emerald-950/90 border-emerald-800'
+                  }`}
+                >
                   <div className="font-bold text-emerald-300 flex items-center gap-1.5 text-xs sm:text-sm">
                     <Check className="w-3.5 h-3.5 text-emerald-400" /> Real-World Scenario Example:
                   </div>
@@ -820,13 +795,8 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                     : 'border-slate-800'
                 }`}
               >
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
-                  <span>Why other options are incorrect:</span>
-                  {activeAudioSegment?.type === 'wrongOptionExp' && (
-                    <span className="text-[10px] text-rose-400 font-mono flex items-center gap-1 font-bold">
-                      <Volume2 className="w-3 h-3 animate-pulse" /> Reading Explanation Content
-                    </span>
-                  )}
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
+                  Why other options are incorrect:
                 </div>
                 <div className="grid gap-2.5">
                   {currentQuestion.options.map((opt) => {
@@ -842,16 +812,10 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                         id={`question-wrong-explanation-${opt.id}`}
                         className={`border rounded-lg p-3 text-xs sm:text-sm text-slate-200 leading-relaxed scroll-mt-28 transition-all duration-200 ${
                           isSpeakingThisWrongOpt
-                            ? 'bg-rose-950/70 border-2 border-rose-400 ring-2 ring-rose-400/80 shadow-xl shadow-rose-500/20 scale-[1.01]'
+                            ? 'bg-rose-950/70 border-2 border-rose-400 ring-2 ring-rose-400/80 shadow-lg shadow-rose-950/40'
                             : 'bg-slate-900/90 border-slate-800'
                         }`}
                       >
-                        {isSpeakingThisWrongOpt && (
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500 text-slate-950 font-black text-[10px] animate-pulse inline-flex mb-1.5">
-                            <Volume2 className="w-3 h-3" />
-                            <span>NARRATING OPTION {opt.id} CONTENT</span>
-                          </div>
-                        )}
                         <div>
                           <span className="font-bold text-rose-400 mr-2">Option {opt.id} ({opt.text}):</span>
                           <span>{explanation}</span>
@@ -867,16 +831,10 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                 id="current-question-exam-tip-box"
                 className={`rounded-xl p-4 sm:p-5 space-y-3 shadow-md scroll-mt-28 transition-all duration-200 ${
                   activeAudioSegment?.type === 'examTip'
-                    ? 'bg-gradient-to-r from-amber-950/90 to-slate-900 border-2 border-amber-400 ring-2 ring-amber-400 shadow-2xl shadow-amber-500/25 scale-[1.005]'
+                    ? 'bg-gradient-to-r from-amber-950/60 to-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/80 shadow-xl shadow-amber-500/20'
                     : 'bg-gradient-to-r from-amber-950/50 to-slate-900 border border-amber-500/50'
                 }`}
               >
-                {activeAudioSegment?.type === 'examTip' && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 font-black text-xs animate-pulse inline-flex mb-1">
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>NARRATING EXAM TIP</span>
-                  </div>
-                )}
                 <p className="text-sm sm:text-base font-medium text-amber-100 leading-relaxed">
                   {currentQuestion.examTip}
                 </p>

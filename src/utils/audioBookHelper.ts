@@ -217,6 +217,31 @@ export function getQuestionSpokenSegments(
     });
   }
 
+  // 4b. Real-World Scenario Example (Content prefaced with 'For example, ')
+  if (q.example && q.example.trim().length > 0) {
+    const cleanExample = q.example
+      .replace(/^(Real-world\s+(scenario\s+)?example\s*[:\-.]?\s*)/i, '')
+      .replace(/^(For\s+example\s*[:\-.]?\s*)/i, '')
+      .trim();
+    if (cleanExample.length > 0) {
+      const firstChar = cleanExample.charAt(0);
+      const isFirstWordAcronym = /^[A-Z]{2,}\b/.test(cleanExample);
+      const formattedText = isFirstWordAcronym
+        ? `For example, ${cleanExample}`
+        : `For example, ${firstChar.toLowerCase()}${cleanExample.slice(1)}`;
+
+      const exampleChunks = splitTextIntoSpokenChunks(formattedText);
+      exampleChunks.forEach((chunkText, idx) => {
+        segments.push({
+          id: `q-${q.id}-example-${idx}`,
+          type: 'example',
+          label: 'For Example',
+          text: chunkText,
+        });
+      });
+    }
+  }
+
   // 5. Why Other Options Are Wrong (Content Alone - no "Why Option X is..." prefix)
   if (readWrongOptions && q.wrongOptionsExplanation && q.options) {
     q.options.forEach((opt) => {
