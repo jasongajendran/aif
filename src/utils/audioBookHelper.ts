@@ -20,6 +20,9 @@ export function cleanTextForSpeech(text: string): string {
     .replace(/<-/g, ' from ')
     .replace(/\//g, ' or ')
     .replace(/&/g, ' and ')
+    // Normalize Option letter headers so Option A is recognized as an uppercase letter name (Ay) rather than article (uh)
+    .replace(/\bOption\s+([A-D])\s*[:\-]?\s*/gi, 'Option $1. ')
+    .replace(/\bOption\s+([A-D])\b/gi, 'Option $1.')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -147,7 +150,7 @@ export function getQuestionSpokenSegments(q: Question, readAllOptions: boolean =
   // 2. Read All Answer Options (if toggle is enabled)
   if (readAllOptions && q.options && q.options.length > 0) {
     q.options.forEach((opt) => {
-      const optChunks = splitTextIntoSpokenChunks(`Option ${opt.id}: ${opt.text}`);
+      const optChunks = splitTextIntoSpokenChunks(`Option ${opt.id}. ${opt.text}`);
       optChunks.forEach((chunkText, idx) => {
         segments.push({
           id: `q-${q.id}-opt-${opt.id}-${idx}`,
@@ -165,13 +168,13 @@ export function getQuestionSpokenSegments(q: Question, readAllOptions: boolean =
     const optionPhrases = q.correctOption.map((optId) => {
       const opt = q.options.find((o) => o.id === optId);
       const text = opt ? opt.text : '';
-      return `Option ${optId}: ${text}`;
+      return `Option ${optId}. ${text}`;
     });
     answerSpeech = `The correct answers are: ${optionPhrases.join('. and ')}.`;
   } else {
     const opt = q.options.find((o) => o.id === q.correctOption);
     const text = opt ? opt.text : q.correctOptionText || '';
-    answerSpeech = `The correct answer is Option ${q.correctOption}: ${text}.`;
+    answerSpeech = `The correct answer is Option ${q.correctOption}. ${text}.`;
   }
 
   const answerChunks = splitTextIntoSpokenChunks(answerSpeech);
