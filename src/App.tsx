@@ -73,6 +73,8 @@ export default function App() {
     window.scrollTo({ top: 120, behavior: 'smooth' });
   };
 
+  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+
   const handleReturnToOrigin = () => {
     if (navigationOrigin) {
       const origin = navigationOrigin;
@@ -98,6 +100,7 @@ export default function App() {
         alwaysRevealAnswers={alwaysRevealAnswers}
         onToggleAlwaysReveal={handleToggleAlwaysReveal}
         currentView={currentView}
+        isAudioPlaying={isAudioPlaying}
         onViewChange={(v) => {
           setCurrentView(v);
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -115,6 +118,7 @@ export default function App() {
             onSelectQuestionId={(id) => setSelectedQuestionId(id)}
             navigationOrigin={navigationOrigin}
             onReturnToOrigin={handleReturnToOrigin}
+            onAudioPlaybackStateChange={(playing) => setIsAudioPlaying(playing)}
             onOpenVisualizations={() => {
               setCurrentView('visualizations');
               window.scrollTo({ top: 0, behavior: 'smooth' });

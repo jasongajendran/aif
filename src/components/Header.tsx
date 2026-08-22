@@ -8,6 +8,7 @@ interface HeaderProps {
   onToggleAlwaysReveal: () => void;
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
+  isAudioPlaying?: boolean;
 }
 
 const STORAGE_KEY_HEADER_COLLAPSED = 'aif_c01_header_collapsed_v1';
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleAlwaysReveal,
   currentView,
   onViewChange,
+  isAudioPlaying = false,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     try {
@@ -28,6 +30,16 @@ export const Header: React.FC<HeaderProps> = ({
     }
   });
 
+  // Allow user to temporarily override the audio mode hide if they want to access header
+  const [audioOverrideShow, setAudioOverrideShow] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Reset temporary override when audio playback state turns off
+    if (!isAudioPlaying) {
+      setAudioOverrideShow(false);
+    }
+  }, [isAudioPlaying]);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_HEADER_COLLAPSED, String(isCollapsed));
@@ -35,6 +47,23 @@ export const Header: React.FC<HeaderProps> = ({
       console.error(e);
     }
   }, [isCollapsed]);
+
+  // When audio is actively playing and distraction-free audio mode is active:
+  // Hide the entire top band and header to keep 100% focus on the reading material.
+  if (isAudioPlaying && !audioOverrideShow) {
+    return (
+      <div className="fixed top-2 right-3 z-40">
+        <button
+          onClick={() => setAudioOverrideShow(true)}
+          className="bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-amber-400 border border-slate-700/80 shadow-lg px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-md transition-all flex items-center space-x-1.5 cursor-pointer opacity-70 hover:opacity-100"
+          title="Show Navigation Header"
+        >
+          <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
+          <span>Show Menu</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-slate-100 sticky top-0 z-50 backdrop-blur-md bg-opacity-95 shadow-md">

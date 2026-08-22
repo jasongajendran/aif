@@ -21,6 +21,7 @@ interface McqPracticeViewProps {
   onOpenVisualizations?: () => void;
   onOpenReadyReckoner?: () => void;
   onOpenFlashcards?: () => void;
+  onAudioPlaybackStateChange?: (isPlaying: boolean) => void;
 }
 
 const CHUNK_SIZE = 50;
@@ -36,6 +37,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   onOpenVisualizations,
   onOpenReadyReckoner,
   onOpenFlashcards,
+  onAudioPlaybackStateChange,
 }) => {
   const [internalSelectedQuestionId, setInternalSelectedQuestionId] = useState<number>(1);
   const selectedQuestionId = propSelectedQuestionId !== undefined ? propSelectedQuestionId : internalSelectedQuestionId;
@@ -719,10 +721,16 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
           {/* Answer Breakdown & Detailed Explanations Panel */}
           {isRevealed && (
-            <div className="space-y-3 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div 
+              id="current-question-explanation"
+              className="space-y-3 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300 scroll-mt-24"
+            >
               
               {/* Correct Answer Explanation with Scenario Example */}
-              <div className="bg-emerald-950/40 border border-emerald-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+              <div 
+                id="current-question-explanation-box"
+                className="bg-emerald-950/40 border border-emerald-800/80 rounded-xl p-4 sm:p-5 space-y-3 scroll-mt-24"
+              >
                 <p className="text-sm sm:text-base text-emerald-100 leading-relaxed font-medium">
                   {currentQuestion.explanation}
                 </p>
@@ -754,7 +762,10 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               </div>
 
               {/* Exam Tip & Keyword Clues Callout */}
-              <div className="bg-gradient-to-r from-amber-950/50 to-slate-900 border border-amber-500/50 rounded-xl p-4 sm:p-5 space-y-3 shadow-md">
+              <div 
+                id="current-question-exam-tip-box"
+                className="bg-gradient-to-r from-amber-950/50 to-slate-900 border border-amber-500/50 rounded-xl p-4 sm:p-5 space-y-3 shadow-md scroll-mt-24"
+              >
                 <p className="text-sm sm:text-base font-medium text-amber-100 leading-relaxed">
                   {currentQuestion.examTip}
                 </p>
@@ -854,7 +865,13 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
         onSelectQuestionId={(id) => setSelectedQuestionId(id)}
         activeSetTab={activeSetTab}
         onSelectSetTab={(setNum) => handleSelectSetTab(setNum)}
-        onClose={() => setIsAudioBookOpen(false)}
+        onClose={() => {
+          setIsAudioBookOpen(false);
+          onAudioPlaybackStateChange?.(false);
+        }}
+        onPlaybackStateChange={(playing) => {
+          onAudioPlaybackStateChange?.(playing);
+        }}
       />
 
     </div>

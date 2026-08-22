@@ -18,6 +18,7 @@ export interface AudioBookPlayerProps {
   isOpen?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
+  onPlaybackStateChange?: (isPlaying: boolean) => void;
 }
 
 const CHUNK_SIZE = 50;
@@ -36,6 +37,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
   isOpen = true,
   isCollapsed: controlledIsCollapsed,
   onToggleCollapse,
+  onPlaybackStateChange,
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -99,11 +101,26 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   });
 
-  // Helper to smoothly focus and scroll to the active question card on screen
-  const focusQuestionCard = useCallback((qId: number) => {
+  // Helper to smoothly focus and scroll to the active question or specific explanation/tip section on screen
+  const focusQuestionCard = useCallback((qId: number, targetType?: string) => {
     if (typeof window === 'undefined') return;
     setTimeout(() => {
       try {
+        if (targetType === 'explanation') {
+          const expEl = document.getElementById('current-question-explanation-box') || 
+                        document.getElementById('current-question-explanation');
+          if (expEl) {
+            expEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        } else if (targetType === 'examTip') {
+          const tipEl = document.getElementById('current-question-exam-tip-box');
+          if (tipEl) {
+            tipEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        }
+
         const cardEl = document.getElementById('current-question-card') || 
                        document.getElementById(`question-card-${qId}`) || 
                        document.getElementById('main-question-container');
@@ -210,6 +227,13 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   }, [readAllOptions]);
 
+  // Sync playback state with parent component (for distraction-free audio mode header hiding)
+  useEffect(() => {
+    if (onPlaybackStateChange) {
+      onPlaybackStateChange(isPlaying && !isPaused);
+    }
+  }, [isPlaying, isPaused, onPlaybackStateChange]);
+
   // Stop Speech
   const stopAudio = useCallback(() => {
     sessionEpochRef.current += 1;
@@ -286,6 +310,15 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
     const currentSeg = segments[segIdx];
     window.speechSynthesis.cancel();
+
+    // Scroll to active segment (explanation, exam tip, or top of question) if autoSyncView is enabled
+    if (autoSyncView && currentPlayingQ) {
+      if (currentSeg.type === 'explanation') {
+        focusQuestionCard(currentPlayingQ.id, 'explanation');
+      } else if (currentSeg.type === 'examTip') {
+        focusQuestionCard(currentPlayingQ.id, 'examTip');
+      }
+    }
 
     const utterance = new SpeechSynthesisUtterance(currentSeg.text);
     
@@ -736,17 +769,17 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
               <span className="text-[9px] font-mono text-slate-400 hidden sm:inline">Speed:</span>
               <select
                 id="audiobook-mini-speed-select"
-                value={playbackRate}
+                value={String(playbackRate)}
                 onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
                 className="bg-transparent text-amber-300 font-mono font-bold text-[11px] focus:outline-none cursor-pointer"
                 title="Playback Speed"
               >
                 <option value="0.75" className="bg-slate-900 text-slate-100">0.75x</option>
-                <option value="1.0" className="bg-slate-900 text-slate-100">1.0x</option>
+                <option value="1" className="bg-slate-900 text-slate-100">1.0x</option>
                 <option value="1.2" className="bg-slate-900 text-slate-100">1.2x</option>
                 <option value="1.5" className="bg-slate-900 text-slate-100">1.5x</option>
                 <option value="1.75" className="bg-slate-900 text-slate-100">1.75x</option>
-                <option value="2.0" className="bg-slate-900 text-slate-100">2.0x</option>
+                <option value="2" className="bg-slate-900 text-slate-100">2.0x</option>
               </select>
             </div>
 
@@ -962,16 +995,16 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                 <span className="text-[10px] font-mono text-slate-400 px-1">Speed:</span>
                 <select
                   id="audiobook-speed-select"
-                  value={playbackRate}
+                  value={String(playbackRate)}
                   onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
                   className="bg-transparent text-amber-300 font-mono font-bold text-xs focus:outline-none cursor-pointer pr-1"
                 >
                   <option value="0.75" className="bg-slate-900 text-slate-100">0.75x</option>
-                  <option value="1.0" className="bg-slate-900 text-slate-100">1.0x</option>
+                  <option value="1" className="bg-slate-900 text-slate-100">1.0x</option>
                   <option value="1.2" className="bg-slate-900 text-slate-100">1.2x</option>
                   <option value="1.5" className="bg-slate-900 text-slate-100">1.5x</option>
                   <option value="1.75" className="bg-slate-900 text-slate-100">1.75x</option>
-                  <option value="2.0" className="bg-slate-900 text-slate-100">2.0x</option>
+                  <option value="2" className="bg-slate-900 text-slate-100">2.0x</option>
                 </select>
               </div>
 

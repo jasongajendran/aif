@@ -25,50 +25,70 @@ export function cleanTextForSpeech(text: string): string {
 }
 
 /**
- * Splits long text into short, natural sentence/clause chunks (max ~110 chars)
- * to prevent Mobile Safari (iOS) and Android Chrome speech engines from stalling or stopping mid-sentence.
+ * Splits long text into short, natural sentence/clause chunks (max ~160 chars)
+ * to prevent Mobile Safari (iOS) and Android Chrome speech engines from stalling.
+ * Uses a safe non-destructive tokenization so NO words, clauses, or numbers are dropped.
  */
-export function splitTextIntoSpokenChunks(text: string, maxChars = 110): string[] {
+export function splitTextIntoSpokenChunks(text: string, maxChars = 160): string[] {
   if (!text) return [];
   const clean = cleanTextForSpeech(text);
-  if (clean.length <= maxChars) return [clean];
+  if (!clean || clean.length <= maxChars) return clean ? [clean] : [];
 
-  // Regex to match sentence units (. ? ! ; :) while retaining punctuation
-  const sentenceMatches = clean.match(/[^.!?;:]+[.!?;:]*/g) || [clean];
+  // Match full sentences ending in . ! ? or major boundaries while keeping everything
+  // Non-destructive regex to keep all punctuation and words
+  const sentences = clean.match(/[^.!?\n]+[.!?\n]*/g) || [clean];
   const chunks: string[] = [];
   let currentChunk = '';
 
-  for (const match of sentenceMatches) {
-    const trimmed = match.trim();
+  for (const item of sentences) {
+    const trimmed = item.trim();
     if (!trimmed) continue;
 
-    if ((currentChunk + ' ' + trimmed).trim().length <= maxChars) {
-      currentChunk = (currentChunk + ' ' + trimmed).trim();
-    } else {
-      if (currentChunk.length > 0) {
-        chunks.push(currentChunk);
-      }
-      if (trimmed.length > maxChars) {
-        // Sub-split long clause by commas or phrases
-        const clauseMatches = trimmed.match(/[^,]+[,]?/g) || [trimmed];
-        let subChunk = '';
-        for (const clause of clauseMatches) {
-          const subTrimmed = clause.trim();
-          if (!subTrimmed) continue;
-          if ((subChunk + ' ' + subTrimmed).trim().length <= maxChars) {
-            subChunk = (subChunk + ' ' + subTrimmed).trim();
+    if (!currentChunk) {
+      if (trimmed.length <= maxChars) {
+        currentChunk = trimmed;
+      } else {
+        // Break long sentence by comma / semicolons / spaces
+        const subParts = trimmed.match(/[^,;:]+[,;:]*/g) || [trimmed];
+        let tempSub = '';
+        for (const part of subParts) {
+          const pTrimmed = part.trim();
+          if (!pTrimmed) continue;
+          if (!tempSub) {
+            tempSub = pTrimmed;
+          } else if ((tempSub + ' ' + pTrimmed).length <= maxChars) {
+            tempSub = tempSub + ' ' + pTrimmed;
           } else {
-            if (subChunk.length > 0) chunks.push(subChunk);
-            subChunk = subTrimmed;
+            chunks.push(tempSub);
+            tempSub = pTrimmed;
           }
         }
-        if (subChunk.length > 0) {
-          currentChunk = subChunk;
-        } else {
-          currentChunk = '';
+        if (tempSub) {
+          currentChunk = tempSub;
         }
-      } else {
+      }
+    } else if ((currentChunk + ' ' + trimmed).length <= maxChars) {
+      currentChunk = currentChunk + ' ' + trimmed;
+    } else {
+      chunks.push(currentChunk);
+      if (trimmed.length <= maxChars) {
         currentChunk = trimmed;
+      } else {
+        const subParts = trimmed.match(/[^,;:]+[,;:]*/g) || [trimmed];
+        let tempSub = '';
+        for (const part of subParts) {
+          const pTrimmed = part.trim();
+          if (!pTrimmed) continue;
+          if (!tempSub) {
+            tempSub = pTrimmed;
+          } else if ((tempSub + ' ' + pTrimmed).length <= maxChars) {
+            tempSub = tempSub + ' ' + pTrimmed;
+          } else {
+            chunks.push(tempSub);
+            tempSub = pTrimmed;
+          }
+        }
+        currentChunk = tempSub;
       }
     }
   }
