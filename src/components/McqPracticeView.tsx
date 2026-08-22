@@ -506,7 +506,11 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
 
       {/* Main Question Card Container */}
       {currentQuestion ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xl relative">
+        <div 
+          id="current-question-card"
+          data-question-id={currentQuestion.id}
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xl relative scroll-mt-24"
+        >
           
           {/* Card Header Info */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
