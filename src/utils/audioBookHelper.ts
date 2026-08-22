@@ -2,13 +2,16 @@ import { Question } from '../types';
 
 export interface SpokenSegment {
   id: string;
-  type: 'header' | 'scenario' | 'question' | 'option' | 'correctAnswer' | 'explanation' | 'examTip' | 'example';
+  type: 'header' | 'scenario' | 'question' | 'option' | 'correctAnswer' | 'explanation' | 'wrongOptionExp' | 'examTip' | 'example';
   label: string;
   text: string;
+  optionId?: string;
 }
 
 /**
  * Normalizes text for clear and natural text-to-speech pronunciation
+ * without losing any words or numbers.
+ * Removes redundant boilerplate like "Why Option B is wrong..." and reads content alone.
  */
 export function cleanTextForSpeech(text: string): string {
   if (!text) return '';
@@ -16,83 +19,91 @@ export function cleanTextForSpeech(text: string): string {
     .replace(/\*\*(.*?)\*\*/g, '$1') // strip markdown bold
     .replace(/\*(.*?)\*/g, '$1') // strip markdown italic
     .replace(/`([^`]+)`/g, '$1') // strip code ticks
+    .replace(/_{1,2}(.*?)_{1,2}/g, '$1') // strip markdown underscore
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // markdown links
+    .replace(/\be\.g\.,?\s*/gi, 'for example, ')
+    .replace(/\bi\.e\.,?\s*/gi, 'that is, ')
+    .replace(/\betc\.\s*/gi, 'etcetera. ')
+    .replace(/\bvs\.?\s*/gi, 'versus ')
     .replace(/->/g, ' to ')
     .replace(/<-/g, ' from ')
     .replace(/\//g, ' or ')
     .replace(/&/g, ' and ')
-    // Normalize Option letter headers so Option A is recognized as an uppercase letter name (Ay) rather than article (uh)
-    .replace(/\bOption\s+([A-D])\s*[:\-]?\s*/gi, 'Option $1. ')
-    .replace(/\bOption\s+([A-D])\b/gi, 'Option $1.')
+    .replace(/\s*\+\s*/g, ' plus ')
+    .replace(/\s*=\s*/g, ' equals ')
+    .replace(/(\d+)\s*%/g, '$1 percent')
+    .replace(/(\d+)\s*GB\b/gi, '$1 gigabytes')
+    .replace(/(\d+)\s*MB\b/gi, '$1 megabytes')
+    .replace(/(\d+)\s*TB\b/gi, '$1 terabytes')
+    .replace(/(\d+)\s*ms\b/gi, '$1 milliseconds')
+    // Strip redundant "Why Option B is...", "Why Option X is wrong", "Option X (text):" prefixes so content alone is read
+    .replace(/\bWhy\s+Option\s+([A-E])\s+(is\s+)?(wrong|incorrect|invalid|false|not\s+suitable|not\s+recommended|flawed)?\s*[:\-.]?\s*/gi, '')
+    .replace(/\bWhy\s+Option\s+([A-E])\s*[:\-.]?\s*/gi, '')
+    .replace(/\bWhy\s+Option\s+([A-E])\s+is\s+/gi, '')
+    .replace(/\bWhy\s+(other\s+options|wrong\s+answers|others)\s+are\s+(wrong|incorrect)\s*[:\-.]?\s*/gi, '')
+    .replace(/\bOption\s+([A-E])\s*\([^)]*\)\s*:\s*/gi, '')
+    .replace(/\bOption\s+([A-E])\s+is\s+(incorrect|wrong|invalid|false)\s*(because|,|:)?\s*/gi, '')
+    // Normalize Option letter headers so Option A is pronounced as an uppercase letter name (Ay)
+    .replace(/\bOption\s+([A-E])\s*[:\-.]?\s*/gi, 'Option $1. ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 /**
- * Splits long text into short, natural sentence/clause chunks (max ~160 chars)
- * to prevent Mobile Safari (iOS) and Android Chrome speech engines from stalling.
- * Uses a safe non-destructive tokenization so NO words, clauses, or numbers are dropped.
+ * Splits text along natural sentence boundaries into complete, smooth chunks
+ * (~280-320 chars max).
+ * Guarantees zero dropped words, preserves decimal numbers, and prevents browser TTS truncation.
  */
-export function splitTextIntoSpokenChunks(text: string, maxChars = 160): string[] {
+export function splitTextIntoSpokenChunks(text: string, maxChars = 280): string[] {
   if (!text) return [];
   const clean = cleanTextForSpeech(text);
-  if (!clean || clean.length <= maxChars) return clean ? [clean] : [];
+  if (!clean) return [];
+  if (clean.length <= maxChars) return [clean];
 
-  // Match full sentences ending in . ! ? or major boundaries while keeping everything
-  // Non-destructive regex to keep all punctuation and words
-  const sentences = clean.match(/[^.!?\n]+[.!?\n]*/g) || [clean];
+  // Split only on real sentence punctuation (. ! ?) followed by whitespace and a capital letter/digit or end
+  // This preserves decimal numbers like 99.9% and abbreviations
+  const rawSentences = clean.split(/(?<=[.!?])\s+(?=[A-Z0-9])/g).filter((s) => s.trim().length > 0);
+  
+  if (rawSentences.length <= 1) {
+    // If a single long sentence exceeds maxChars, split gently on semicolons, colons, or commas with safety
+    const subClauses = clean.split(/(?<=[,;:])\s+/g).filter((s) => s.trim().length > 0);
+    if (subClauses.length <= 1) {
+      return [clean];
+    }
+    const chunks: string[] = [];
+    let currentBuffer = '';
+    for (const clause of subClauses) {
+      const trimmed = clause.trim();
+      if (!trimmed) continue;
+      if (!currentBuffer) {
+        currentBuffer = trimmed;
+      } else if ((currentBuffer + ' ' + trimmed).length <= maxChars) {
+        currentBuffer = currentBuffer + ' ' + trimmed;
+      } else {
+        chunks.push(currentBuffer);
+        currentBuffer = trimmed;
+      }
+    }
+    if (currentBuffer) {
+      chunks.push(currentBuffer);
+    }
+    return chunks.length > 0 ? chunks : [clean];
+  }
+
   const chunks: string[] = [];
   let currentChunk = '';
 
-  for (const item of sentences) {
+  for (const item of rawSentences) {
     const trimmed = item.trim();
     if (!trimmed) continue;
 
     if (!currentChunk) {
-      if (trimmed.length <= maxChars) {
-        currentChunk = trimmed;
-      } else {
-        // Break long sentence by comma / semicolons / spaces
-        const subParts = trimmed.match(/[^,;:]+[,;:]*/g) || [trimmed];
-        let tempSub = '';
-        for (const part of subParts) {
-          const pTrimmed = part.trim();
-          if (!pTrimmed) continue;
-          if (!tempSub) {
-            tempSub = pTrimmed;
-          } else if ((tempSub + ' ' + pTrimmed).length <= maxChars) {
-            tempSub = tempSub + ' ' + pTrimmed;
-          } else {
-            chunks.push(tempSub);
-            tempSub = pTrimmed;
-          }
-        }
-        if (tempSub) {
-          currentChunk = tempSub;
-        }
-      }
+      currentChunk = trimmed;
     } else if ((currentChunk + ' ' + trimmed).length <= maxChars) {
       currentChunk = currentChunk + ' ' + trimmed;
     } else {
       chunks.push(currentChunk);
-      if (trimmed.length <= maxChars) {
-        currentChunk = trimmed;
-      } else {
-        const subParts = trimmed.match(/[^,;:]+[,;:]*/g) || [trimmed];
-        let tempSub = '';
-        for (const part of subParts) {
-          const pTrimmed = part.trim();
-          if (!pTrimmed) continue;
-          if (!tempSub) {
-            tempSub = pTrimmed;
-          } else if ((tempSub + ' ' + pTrimmed).length <= maxChars) {
-            tempSub = tempSub + ' ' + pTrimmed;
-          } else {
-            chunks.push(tempSub);
-            tempSub = pTrimmed;
-          }
-        }
-        currentChunk = tempSub;
-      }
+      currentChunk = trimmed;
     }
   }
 
@@ -106,8 +117,13 @@ export function splitTextIntoSpokenChunks(text: string, maxChars = 160): string[
 /**
  * Generates the sequential spoken segments for a question.
  * Uses sentence chunking so mobile devices read smoothly without stalling.
+ * Allows reading question, options, correct answer, explanation, why others are wrong (content alone), and exam tip.
  */
-export function getQuestionSpokenSegments(q: Question, readAllOptions: boolean = false): SpokenSegment[] {
+export function getQuestionSpokenSegments(
+  q: Question, 
+  readAllOptions: boolean = false, 
+  readWrongOptions: boolean = false
+): SpokenSegment[] {
   const segments: SpokenSegment[] = [];
 
   // 1. Direct Question Start (No Topic / Domain announcement)
@@ -118,8 +134,8 @@ export function getQuestionSpokenSegments(q: Question, readAllOptions: boolean =
     scenarioChunks.forEach((chunkText, idx) => {
       segments.push({
         id: `q-${q.id}-scenario-${idx}`,
-        type: 'question',
-        label: `Question ${q.id}`,
+        type: 'scenario',
+        label: `Question ${q.id} Scenario`,
         text: chunkText,
       });
     });
@@ -157,6 +173,7 @@ export function getQuestionSpokenSegments(q: Question, readAllOptions: boolean =
           type: 'option',
           label: `Option ${opt.id}`,
           text: chunkText,
+          optionId: opt.id,
         });
       });
     });
@@ -200,7 +217,38 @@ export function getQuestionSpokenSegments(q: Question, readAllOptions: boolean =
     });
   }
 
-  // 5. Exam Tip for Memory Anchor (if available)
+  // 5. Why Other Options Are Wrong (Content Alone - no "Why Option X is..." prefix)
+  if (readWrongOptions && q.wrongOptionsExplanation && q.options) {
+    q.options.forEach((opt) => {
+      const isCorrect = Array.isArray(q.correctOption)
+        ? q.correctOption.includes(opt.id)
+        : opt.id === q.correctOption;
+      if (isCorrect) return;
+
+      const rawExp = q.wrongOptionsExplanation[opt.id];
+      if (rawExp && rawExp.trim().length > 0 && !rawExp.toLowerCase().includes('correct answer')) {
+        // Strip any "Why Option B is...", "Option B (text):", "Option B is wrong because" - read content alone
+        const cleanedExp = rawExp
+          .replace(/^Why\s+Option\s+[A-E]\s+(is\s+)?(wrong|incorrect|invalid|false)?\s*[:\-.]?\s*/i, '')
+          .replace(/^Option\s+[A-E]\s*(\([^)]*\))?\s*[:\-.]?\s*/i, '')
+          .replace(/^Option\s+[A-E]\s+is\s+(incorrect|wrong|invalid|false)\s*(because|,|:)?\s*/i, '')
+          .trim();
+
+        const wrongChunks = splitTextIntoSpokenChunks(cleanedExp);
+        wrongChunks.forEach((chunkText, idx) => {
+          segments.push({
+            id: `q-${q.id}-wrong-${opt.id}-${idx}`,
+            type: 'wrongOptionExp',
+            label: `Option ${opt.id} Breakdown`,
+            text: chunkText,
+            optionId: opt.id,
+          });
+        });
+      }
+    });
+  }
+
+  // 6. Exam Tip for Memory Anchor (if available)
   if (q.examTip && q.examTip.trim().length > 0) {
     const tipChunks = splitTextIntoSpokenChunks(`Exam Tip: ${q.examTip}`);
     tipChunks.forEach((chunkText, idx) => {

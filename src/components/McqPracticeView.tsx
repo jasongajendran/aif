@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { AudioBookPlayer } from './AudioBookPlayer';
 import { SetAudioBookModal } from './SetAudioBookModal';
+import { SpokenSegment } from '../utils/audioBookHelper';
 
 interface McqPracticeViewProps {
   questions: Question[];
@@ -117,6 +118,7 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   // Set Audiobook Player & Modal State
   const [isAudioBookOpen, setIsAudioBookOpen] = useState<boolean>(false);
   const [isAudioBookModalOpen, setIsAudioBookModalOpen] = useState<boolean>(false);
+  const [activeAudioSegment, setActiveAudioSegment] = useState<SpokenSegment | null>(null);
 
   const handleStartSetAudioBook = (setNum: number | 'all', targetQId?: number) => {
     handleSelectSetTab(setNum);
@@ -127,7 +129,12 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
   };
 
   const handleToggleAudioBookPlayer = () => {
-    setIsAudioBookOpen((prev) => !prev);
+    setIsAudioBookOpen((prev) => {
+      if (prev) {
+        setActiveAudioSegment(null);
+      }
+      return !prev;
+    });
   };
 
   // Monitor window scroll for Go To Top icon
@@ -581,11 +588,24 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           </div>
 
           {/* Scenario Context Block */}
-          <div className="bg-slate-950/90 border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 mb-4 text-slate-100 text-sm sm:text-base leading-relaxed font-sans shadow-inner">
+          <div 
+            id="current-question-scenario-box"
+            className={`border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 mb-4 text-slate-100 text-sm sm:text-base leading-relaxed font-sans shadow-inner transition-all duration-200 scroll-mt-28 ${
+              activeAudioSegment?.type === 'scenario'
+                ? 'bg-amber-950/80 border-amber-400 ring-2 ring-amber-400 shadow-xl shadow-amber-500/20'
+                : 'bg-slate-950/90'
+            }`}
+          >
             <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-900">
               <div className="flex items-center space-x-2 text-amber-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Scenario Context</span>
+                {activeAudioSegment?.type === 'scenario' && (
+                  <span className="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded flex items-center gap-1 animate-pulse">
+                    <Volume2 className="w-3 h-3" />
+                    <span>NARRATING SCENARIO</span>
+                  </span>
+                )}
                 {highlightKeywords && (
                   <span className="hidden sm:inline-block bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
                     Keywords Highlighted
@@ -623,15 +643,30 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           </div>
 
           {/* Question Text */}
-          <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-4 leading-snug tracking-tight">
-            <HighlightedExamText
-              text={currentQuestion.questionText}
-              clues={currentQuestion.keywordClues}
-              topic={currentQuestion.topic}
-              domain={currentQuestion.domain}
-              enabled={highlightKeywords}
-            />
-          </h2>
+          <div 
+            id="current-question-text-box"
+            className={`transition-all duration-200 scroll-mt-28 mb-4 rounded-xl ${
+              activeAudioSegment?.type === 'question'
+                ? 'bg-amber-500/15 p-3.5 ring-2 ring-amber-400 border border-amber-400/40 shadow-xl shadow-amber-500/20'
+                : ''
+            }`}
+          >
+            {activeAudioSegment?.type === 'question' && (
+              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-black text-[10px] animate-pulse w-fit mb-2">
+                <Volume2 className="w-3 h-3" />
+                <span>NARRATING QUESTION</span>
+              </div>
+            )}
+            <h2 className={`text-base sm:text-lg md:text-xl font-bold leading-snug tracking-tight ${activeAudioSegment?.type === 'question' ? 'text-amber-100' : 'text-white'}`}>
+              <HighlightedExamText
+                text={currentQuestion.questionText}
+                clues={currentQuestion.keywordClues}
+                topic={currentQuestion.topic}
+                domain={currentQuestion.domain}
+                enabled={highlightKeywords}
+              />
+            </h2>
+          </div>
 
           {/* Options List */}
           <div className="space-y-2 mb-5">
@@ -643,10 +678,19 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                 ? currentQuestion.correctOption.includes(option.id)
                 : option.id === currentQuestion.correctOption;
 
+              const isOptionSpeaking = activeAudioSegment?.type === 'option' && activeAudioSegment?.optionId === option.id;
+              const isAnswerSpeaking = activeAudioSegment?.type === 'correctAnswer' && isCorrectOption;
+
               let optionStyle = 'bg-slate-800/80 border-slate-700 hover:bg-slate-800 hover:border-slate-500 text-slate-100';
               let badgeStyle = 'bg-slate-800 border-slate-600 text-slate-200';
 
-              if (isRevealed) {
+              if (isOptionSpeaking) {
+                optionStyle = 'bg-amber-500/25 border-amber-400 text-white ring-2 ring-amber-400 scale-[1.015] shadow-xl shadow-amber-500/25 font-semibold';
+                badgeStyle = 'bg-amber-400 text-slate-950 font-black ring-2 ring-amber-300';
+              } else if (isAnswerSpeaking) {
+                optionStyle = 'bg-emerald-950/90 border-emerald-400 text-emerald-50 ring-2 ring-emerald-400 font-bold shadow-xl shadow-emerald-950/60 scale-[1.015]';
+                badgeStyle = 'bg-emerald-500 text-slate-950 font-black ring-2 ring-emerald-300';
+              } else if (isRevealed) {
                 if (isCorrectOption) {
                   optionStyle = 'bg-emerald-950/80 border-emerald-500 text-emerald-50 ring-1 ring-emerald-500/60 font-medium shadow-md shadow-emerald-950/40';
                   badgeStyle = 'bg-emerald-500 text-slate-950 font-black';
@@ -664,8 +708,9 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               return (
                 <button
                   key={option.id}
+                  id={`question-option-${option.id}`}
                   onClick={() => handleOptionClick(option.id)}
-                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl border transition-all duration-150 flex items-center space-x-3 group relative min-h-[44px] ${optionStyle}`}
+                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl border transition-all duration-150 flex items-center space-x-3 group relative min-h-[44px] scroll-mt-28 ${optionStyle}`}
                 >
                   <span className={`w-7 h-7 rounded-lg border text-sm sm:text-base font-mono font-bold flex items-center justify-center flex-shrink-0 transition-all ${badgeStyle}`}>
                     {option.id}
@@ -675,13 +720,27 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                     {option.text}
                   </span>
 
-                  {isRevealed && isCorrectOption && (
+                  {isOptionSpeaking && (
+                    <div className="flex items-center space-x-1.5 bg-amber-400 text-slate-950 text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-lg flex-shrink-0 shadow-md animate-pulse">
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>READING OPTION</span>
+                    </div>
+                  )}
+
+                  {isAnswerSpeaking && !isOptionSpeaking && (
+                    <div className="flex items-center space-x-1.5 bg-emerald-400 text-slate-950 text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-lg flex-shrink-0 shadow-md animate-pulse">
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>CORRECT ANSWER</span>
+                    </div>
+                  )}
+
+                  {!isOptionSpeaking && !isAnswerSpeaking && isRevealed && isCorrectOption && (
                     <div className="flex items-center space-x-1.5 bg-emerald-500 text-slate-950 text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg flex-shrink-0 shadow-sm">
                       <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">CORRECT</span>
                     </div>
                   )}
-                  {isSelected && !isCorrectOption && isRevealed && (
+                  {!isOptionSpeaking && !isAnswerSpeaking && isSelected && !isCorrectOption && isRevealed && (
                     <div className="flex items-center space-x-1.5 bg-rose-500 text-white text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg flex-shrink-0 shadow-sm">
                       <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">YOUR PICK</span>
@@ -723,14 +782,24 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
           {isRevealed && (
             <div 
               id="current-question-explanation"
-              className="space-y-3 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300 scroll-mt-24"
+              className="space-y-3 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300 scroll-mt-28"
             >
               
               {/* Correct Answer Explanation with Scenario Example */}
               <div 
                 id="current-question-explanation-box"
-                className="bg-emerald-950/40 border border-emerald-800/80 rounded-xl p-4 sm:p-5 space-y-3 scroll-mt-24"
+                className={`rounded-xl p-4 sm:p-5 space-y-3 scroll-mt-28 transition-all duration-200 ${
+                  activeAudioSegment?.type === 'explanation'
+                    ? 'bg-emerald-950/90 border-2 border-emerald-400 ring-2 ring-emerald-400 shadow-2xl shadow-emerald-950/70 scale-[1.005]'
+                    : 'bg-emerald-950/40 border border-emerald-800/80'
+                }`}
               >
+                {activeAudioSegment?.type === 'explanation' && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-black text-xs animate-pulse inline-flex mb-1">
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>NARRATING EXPLANATION</span>
+                  </div>
+                )}
                 <p className="text-sm sm:text-base text-emerald-100 leading-relaxed font-medium">
                   {currentQuestion.explanation}
                 </p>
@@ -743,7 +812,22 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               </div>
 
               {/* Why Wrong Answers are Wrong Section */}
-              <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-4 sm:p-5">
+              <div 
+                id="current-question-wrong-options-box"
+                className={`bg-slate-950/90 border rounded-xl p-4 sm:p-5 transition-all duration-200 ${
+                  activeAudioSegment?.type === 'wrongOptionExp'
+                    ? 'border-rose-500/60 shadow-lg shadow-rose-950/40'
+                    : 'border-slate-800'
+                }`}
+              >
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                  <span>Why other options are incorrect:</span>
+                  {activeAudioSegment?.type === 'wrongOptionExp' && (
+                    <span className="text-[10px] text-rose-400 font-mono flex items-center gap-1 font-bold">
+                      <Volume2 className="w-3 h-3 animate-pulse" /> Reading Explanation Content
+                    </span>
+                  )}
+                </div>
                 <div className="grid gap-2.5">
                   {currentQuestion.options.map((opt) => {
                     const isCorrect = Array.isArray(currentQuestion.correctOption)
@@ -751,10 +835,27 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
                       : opt.id === currentQuestion.correctOption;
                     if (isCorrect) return null;
                     const explanation = currentQuestion.wrongOptionsExplanation[opt.id];
+                    const isSpeakingThisWrongOpt = activeAudioSegment?.type === 'wrongOptionExp' && activeAudioSegment?.optionId === opt.id;
                     return (
-                      <div key={opt.id} className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 text-xs sm:text-sm text-slate-200 leading-relaxed">
-                        <span className="font-bold text-rose-400 mr-2">Option {opt.id} ({opt.text}):</span>
-                        <span>{explanation}</span>
+                      <div 
+                        key={opt.id} 
+                        id={`question-wrong-explanation-${opt.id}`}
+                        className={`border rounded-lg p-3 text-xs sm:text-sm text-slate-200 leading-relaxed scroll-mt-28 transition-all duration-200 ${
+                          isSpeakingThisWrongOpt
+                            ? 'bg-rose-950/70 border-2 border-rose-400 ring-2 ring-rose-400/80 shadow-xl shadow-rose-500/20 scale-[1.01]'
+                            : 'bg-slate-900/90 border-slate-800'
+                        }`}
+                      >
+                        {isSpeakingThisWrongOpt && (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500 text-slate-950 font-black text-[10px] animate-pulse inline-flex mb-1.5">
+                            <Volume2 className="w-3 h-3" />
+                            <span>NARRATING OPTION {opt.id} CONTENT</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-bold text-rose-400 mr-2">Option {opt.id} ({opt.text}):</span>
+                          <span>{explanation}</span>
+                        </div>
                       </div>
                     );
                   })}
@@ -764,8 +865,18 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
               {/* Exam Tip & Keyword Clues Callout */}
               <div 
                 id="current-question-exam-tip-box"
-                className="bg-gradient-to-r from-amber-950/50 to-slate-900 border border-amber-500/50 rounded-xl p-4 sm:p-5 space-y-3 shadow-md scroll-mt-24"
+                className={`rounded-xl p-4 sm:p-5 space-y-3 shadow-md scroll-mt-28 transition-all duration-200 ${
+                  activeAudioSegment?.type === 'examTip'
+                    ? 'bg-gradient-to-r from-amber-950/90 to-slate-900 border-2 border-amber-400 ring-2 ring-amber-400 shadow-2xl shadow-amber-500/25 scale-[1.005]'
+                    : 'bg-gradient-to-r from-amber-950/50 to-slate-900 border border-amber-500/50'
+                }`}
               >
+                {activeAudioSegment?.type === 'examTip' && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 font-black text-xs animate-pulse inline-flex mb-1">
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>NARRATING EXAM TIP</span>
+                  </div>
+                )}
                 <p className="text-sm sm:text-base font-medium text-amber-100 leading-relaxed">
                   {currentQuestion.examTip}
                 </p>
@@ -867,10 +978,14 @@ export const McqPracticeView: React.FC<McqPracticeViewProps> = ({
         onSelectSetTab={(setNum) => handleSelectSetTab(setNum)}
         onClose={() => {
           setIsAudioBookOpen(false);
+          setActiveAudioSegment(null);
           onAudioPlaybackStateChange?.(false);
         }}
         onPlaybackStateChange={(playing) => {
           onAudioPlaybackStateChange?.(playing);
+        }}
+        onActiveSegmentChange={(segment) => {
+          setActiveAudioSegment(segment);
         }}
       />
 

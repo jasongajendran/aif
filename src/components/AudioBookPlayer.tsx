@@ -19,12 +19,14 @@ export interface AudioBookPlayerProps {
   isCollapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
   onPlaybackStateChange?: (isPlaying: boolean) => void;
+  onActiveSegmentChange?: (segment: SpokenSegment | null) => void;
 }
 
 const CHUNK_SIZE = 50;
 const STORAGE_KEY_VOICE_NAME = 'aif_c01_audiobook_voice_v1';
 const STORAGE_KEY_SPEED = 'aif_c01_audiobook_speed_v1';
 const STORAGE_KEY_READ_ALL_OPTIONS = 'aif_c01_audiobook_read_all_options_v1';
+const STORAGE_KEY_READ_WHY_WRONG = 'aif_c01_audiobook_read_why_wrong_v1';
 const STORAGE_KEY_COLLAPSED = 'aif_c01_audiobook_collapsed_v1';
 
 export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
@@ -38,6 +40,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
   isCollapsed: controlledIsCollapsed,
   onToggleCollapse,
   onPlaybackStateChange,
+  onActiveSegmentChange,
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -82,6 +85,16 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   });
 
+  // Toggle mode: Include why other options are wrong (read content alone without boilerplate)
+  const [readWhyWrong, setReadWhyWrong] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_READ_WHY_WRONG);
+      return saved !== null ? saved === 'true' : true; // Default to true
+    } catch {
+      return true;
+    }
+  });
+
   // Speed and Voice
   const [playbackRate, setPlaybackRate] = useState<number>(() => {
     try {
@@ -101,16 +114,53 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   });
 
-  // Helper to smoothly focus and scroll to the active question or specific explanation/tip section on screen
-  const focusQuestionCard = useCallback((qId: number, targetType?: string) => {
+  // Helper to smoothly focus and scroll to the exact element currently being spoken
+  const focusQuestionCard = useCallback((qId: number, targetType?: string, optionId?: string) => {
     if (typeof window === 'undefined') return;
     setTimeout(() => {
       try {
-        if (targetType === 'explanation') {
+        if (targetType === 'scenario') {
+          const scEl = document.getElementById('current-question-scenario-box');
+          if (scEl) {
+            scEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        } else if (targetType === 'question') {
+          const qEl = document.getElementById('current-question-text-box') || document.getElementById('current-question-card');
+          if (qEl) {
+            qEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        } else if (targetType === 'option' && optionId) {
+          const optEl = document.getElementById(`question-option-${optionId}`);
+          if (optEl) {
+            optEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        } else if (targetType === 'correctAnswer') {
+          const optEl = optionId ? document.getElementById(`question-option-${optionId}`) : null;
+          const expEl = document.getElementById('current-question-explanation-box') || 
+                        document.getElementById('current-question-explanation');
+          if (optEl) {
+            optEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          } else if (expEl) {
+            expEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        } else if (targetType === 'explanation') {
           const expEl = document.getElementById('current-question-explanation-box') || 
                         document.getElementById('current-question-explanation');
           if (expEl) {
             expEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        } else if (targetType === 'wrongOptionExp' && optionId) {
+          const wrongEl = document.getElementById(`question-wrong-explanation-${optionId}`) || 
+                          document.getElementById('current-question-wrong-options-box') ||
+                          document.getElementById(`question-option-${optionId}`);
+          if (wrongEl) {
+            wrongEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
           }
         } else if (targetType === 'examTip') {
@@ -139,9 +189,10 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
   const isInternalAdvanceRef = useRef<boolean>(false);
   const prevQIdRef = useRef<number>(currentQuestionId);
 
-  // Track active utterance, chunk safety timer, and session generation to prevent stale callbacks and ensure clean replays on mobile
+  // Track active utterance, chunk safety timer, keep-alive interval, and session generation to prevent stale callbacks and ensure complete reading
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const chunkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keepAliveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionEpochRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlayingRef = useRef<boolean>(false);
@@ -161,6 +212,9 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
   const readAllOptionsRef = useRef<boolean>(readAllOptions);
   readAllOptionsRef.current = readAllOptions;
+
+  const readWhyWrongRef = useRef<boolean>(readWhyWrong);
+  readWhyWrongRef.current = readWhyWrong;
 
   const rateRef = useRef<number>(playbackRate);
   rateRef.current = playbackRate;
@@ -227,6 +281,14 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     }
   }, [readAllOptions]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_READ_WHY_WRONG, String(readWhyWrong));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [readWhyWrong]);
+
   // Sync playback state with parent component (for distraction-free audio mode header hiding)
   useEffect(() => {
     if (onPlaybackStateChange) {
@@ -245,6 +307,10 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       clearTimeout(chunkTimeoutRef.current);
       chunkTimeoutRef.current = null;
     }
+    if (keepAliveIntervalRef.current) {
+      clearInterval(keepAliveIntervalRef.current);
+      keepAliveIntervalRef.current = null;
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -256,9 +322,12 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     setIsPaused(false);
     isPlayingRef.current = false;
     isPausedRef.current = false;
-  }, []);
+    if (onActiveSegmentChange) {
+      onActiveSegmentChange(null);
+    }
+  }, [onActiveSegmentChange]);
 
-  // Play next segment or advance to next question with generation epoch guard & mobile safety timeouts
+  // Play next segment or advance to next question with generation epoch guard & boundary tracking
   const speakCurrentSegment = useCallback((epoch: number) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     if (epoch !== sessionEpochRef.current) return;
@@ -267,6 +336,10 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     if (chunkTimeoutRef.current) {
       clearTimeout(chunkTimeoutRef.current);
       chunkTimeoutRef.current = null;
+    }
+    if (keepAliveIntervalRef.current) {
+      clearInterval(keepAliveIntervalRef.current);
+      keepAliveIntervalRef.current = null;
     }
 
     const segments = currentSegmentsRef.current;
@@ -278,7 +351,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       const nextQIdx = qIdx + 1;
       if (nextQIdx < setQuestions.length) {
         const nextQ = setQuestions[nextQIdx];
-        const nextSegments = getQuestionSpokenSegments(nextQ, readAllOptionsRef.current);
+        const nextSegments = getQuestionSpokenSegments(nextQ, readAllOptionsRef.current, readWhyWrongRef.current);
         setCurrentPlaybackQIndex(nextQIdx);
         setCurrentSegmentIndex(0);
         setCurrentSegments(nextSegments);
@@ -294,13 +367,13 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
           focusQuestionCard(nextQ.id);
         }
 
-        // Slight natural pause between questions
+        // Natural pause between questions
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
           if (epoch === sessionEpochRef.current && isPlayingRef.current && !isPausedRef.current) {
             speakCurrentSegment(epoch);
           }
-        }, 650);
+        }, 500);
       } else {
         // Completed the whole Set!
         stopAudio();
@@ -311,13 +384,22 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     const currentSeg = segments[segIdx];
     window.speechSynthesis.cancel();
 
-    // Scroll to active segment (explanation, exam tip, or top of question) if autoSyncView is enabled
-    if (autoSyncView && currentPlayingQ) {
-      if (currentSeg.type === 'explanation') {
-        focusQuestionCard(currentPlayingQ.id, 'explanation');
-      } else if (currentSeg.type === 'examTip') {
-        focusQuestionCard(currentPlayingQ.id, 'examTip');
-      }
+    // Broadcast current active segment for real-time visual highlight
+    if (onActiveSegmentChange) {
+      onActiveSegmentChange(currentSeg);
+    }
+
+    // Scroll to exact active segment (scenario, question, specific option, answer, explanation, or exam tip)
+    const activeQ = setQuestions[qIdx];
+    if (autoSyncView && activeQ) {
+      const correctOptId = Array.isArray(activeQ.correctOption)
+        ? activeQ.correctOption[0]
+        : activeQ.correctOption;
+      focusQuestionCard(
+        activeQ.id,
+        currentSeg.type,
+        currentSeg.optionId || (currentSeg.type === 'correctAnswer' ? correctOptId : undefined)
+      );
     }
 
     const utterance = new SpeechSynthesisUtterance(currentSeg.text);
@@ -341,11 +423,25 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       utterance.lang = 'en-GB';
     }
 
-    const handleAdvanceNextChunk = () => {
+    let hasCompleted = false;
+    let lastSpokenTime = Date.now();
+
+    const cleanupActiveSpeech = () => {
       if (chunkTimeoutRef.current) {
         clearTimeout(chunkTimeoutRef.current);
         chunkTimeoutRef.current = null;
       }
+      if (keepAliveIntervalRef.current) {
+        clearInterval(keepAliveIntervalRef.current);
+        keepAliveIntervalRef.current = null;
+      }
+    };
+
+    const handleAdvanceNextChunk = () => {
+      if (hasCompleted) return;
+      hasCompleted = true;
+      cleanupActiveSpeech();
+
       if (epoch !== sessionEpochRef.current || !isPlayingRef.current || isPausedRef.current) return;
 
       // Advance to next segment
@@ -358,7 +454,15 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
         if (epoch === sessionEpochRef.current && isPlayingRef.current && !isPausedRef.current) {
           speakCurrentSegment(epoch);
         }
-      }, 180);
+      }, 100);
+    };
+
+    utterance.onstart = () => {
+      lastSpokenTime = Date.now();
+    };
+
+    utterance.onboundary = () => {
+      lastSpokenTime = Date.now();
     };
 
     utterance.onend = () => {
@@ -367,10 +471,13 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
     utterance.onerror = (e) => {
       if (epoch !== sessionEpochRef.current) return;
-      if (e.error !== 'canceled' && e.error !== 'interrupted') {
-        console.warn('SpeechSynthesis error:', e);
-        handleAdvanceNextChunk();
+      if (e.error === 'canceled' || e.error === 'interrupted') {
+        // Canceled intentionally, do not advance
+        cleanupActiveSpeech();
+        return;
       }
+      console.warn('SpeechSynthesis non-blocking error:', e.error);
+      handleAdvanceNextChunk();
     };
 
     // Keep global reference to prevent Garbage Collection on Mobile Safari / Android Chrome
@@ -379,20 +486,37 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
     window.speechSynthesis.speak(utterance);
 
-    // Watchdog timer: estimated duration with speed scaling + safety buffer
-    const words = currentSeg.text.split(/\s+/).filter(Boolean).length;
-    const estimatedSec = Math.max(1.2, (words / (2.8 * effectiveRate)) + 1.2);
-    const expectedDurationMs = estimatedSec * 1000;
-
-    chunkTimeoutRef.current = setTimeout(() => {
-      if (epoch === sessionEpochRef.current && isPlayingRef.current && !isPausedRef.current) {
-        console.warn('Chunk safety timer triggered for segment:', currentSeg.text);
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
+    // Keep-alive pulse for Chromium 14-second pause bug
+    keepAliveIntervalRef.current = setInterval(() => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
         }
-        handleAdvanceNextChunk();
       }
-    }, Math.max(expectedDurationMs, 2500));
+    }, 8000);
+
+    // Non-intrusive safety watchdog: checks periodically if the engine stalled with zero words spoken for 12+ seconds
+    const checkSafetyWatchdog = () => {
+      chunkTimeoutRef.current = setTimeout(() => {
+        if (hasCompleted || epoch !== sessionEpochRef.current || !isPlayingRef.current || isPausedRef.current) {
+          return;
+        }
+        const timeSinceLastSpoken = Date.now() - lastSpokenTime;
+        if (timeSinceLastSpoken > 14000) {
+          console.warn('SpeechSynthesis stalled without boundary event for segment:', currentSeg.text);
+          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+          }
+          handleAdvanceNextChunk();
+        } else {
+          // Still active and speaking, check again in 4 seconds
+          checkSafetyWatchdog();
+        }
+      }, 4000);
+    };
+
+    checkSafetyWatchdog();
   }, [setQuestions, autoSyncView, onSelectQuestionId, stopAudio, availableVoices, focusQuestionCard]);
 
   // Handle Dynamic Speed Change with Immediate Audible Effect
@@ -448,7 +572,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     const startQ = setQuestions[foundIndex] || setQuestions[0];
     if (!startQ) return;
 
-    const segments = getQuestionSpokenSegments(startQ, readAllOptionsRef.current);
+    const segments = getQuestionSpokenSegments(startQ, readAllOptionsRef.current, readWhyWrongRef.current);
     setCurrentPlaybackQIndex(foundIndex);
     setCurrentSegmentIndex(0);
     setCurrentSegments(segments);
@@ -488,7 +612,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     const q = setQuestions[currentQIndexRef.current] || setQuestions[0];
     if (!q) return;
 
-    const segments = getQuestionSpokenSegments(q, readAllOptionsRef.current);
+    const segments = getQuestionSpokenSegments(q, readAllOptionsRef.current, readWhyWrongRef.current);
     setCurrentSegmentIndex(0);
     setCurrentSegments(segments);
 
@@ -517,11 +641,40 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
 
     const q = setQuestions[currentQIndexRef.current] || setQuestions[0];
     if (q) {
-      const segs = getQuestionSpokenSegments(q, value);
+      const segs = getQuestionSpokenSegments(q, value, readWhyWrongRef.current);
       setCurrentSegments(segs);
       currentSegmentsRef.current = segs;
 
       // If playing actively, restart the current question with new mode seamlessly
+      if (isPlayingRef.current && !isPausedRef.current) {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        const newEpoch = ++sessionEpochRef.current;
+        setCurrentSegmentIndex(0);
+        currentSegIndexRef.current = 0;
+        timerRef.current = setTimeout(() => {
+          speakCurrentSegment(newEpoch);
+        }, 60);
+      }
+    }
+  };
+
+  // Handle Mode Change for Why Others Are Wrong (Content Alone)
+  const handleToggleReadWhyWrong = (value: boolean) => {
+    setReadWhyWrong(value);
+    readWhyWrongRef.current = value;
+
+    const q = setQuestions[currentQIndexRef.current] || setQuestions[0];
+    if (q) {
+      const segs = getQuestionSpokenSegments(q, readAllOptionsRef.current, value);
+      setCurrentSegments(segs);
+      currentSegmentsRef.current = segs;
+
       if (isPlayingRef.current && !isPausedRef.current) {
         if (timerRef.current) {
           clearTimeout(timerRef.current);
@@ -547,12 +700,18 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     } else if (isPaused) {
       setIsPaused(false);
       isPausedRef.current = false;
+      if (onActiveSegmentChange) {
+        onActiveSegmentChange(currentSegmentsRef.current[currentSegIndexRef.current] || null);
+      }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.resume();
       }
     } else {
       setIsPaused(true);
       isPausedRef.current = true;
+      if (onActiveSegmentChange) {
+        onActiveSegmentChange(null);
+      }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.pause();
       }
@@ -607,7 +766,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
     const q = setQuestions[foundIndex];
     if (!q) return;
 
-    const segments = getQuestionSpokenSegments(q, readAllOptionsRef.current);
+    const segments = getQuestionSpokenSegments(q, readAllOptionsRef.current, readWhyWrongRef.current);
     setCurrentPlaybackQIndex(foundIndex);
     setCurrentSegmentIndex(0);
     setCurrentSegments(segments);
@@ -648,6 +807,10 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
       if (chunkTimeoutRef.current) {
         clearTimeout(chunkTimeoutRef.current);
         chunkTimeoutRef.current = null;
+      }
+      if (keepAliveIntervalRef.current) {
+        clearInterval(keepAliveIntervalRef.current);
+        keepAliveIntervalRef.current = null;
       }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -1098,6 +1261,22 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                 </button>
               </div>
 
+              {/* Why Others Are Wrong Toggle in Settings */}
+              <div className="flex items-center space-x-2">
+                <span className="font-bold text-slate-300">Other Options Reasons:</span>
+                <button
+                  onClick={() => handleToggleReadWhyWrong(!readWhyWrong)}
+                  className={`px-3 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                    readWhyWrong
+                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                  }`}
+                  title="Reads content of why incorrect options are wrong without boilerplate prefixes"
+                >
+                  {readWhyWrong ? '✓ Read Why Others Wrong (Content Only)' : '✕ Skip Other Options Reasons'}
+                </button>
+              </div>
+
               {/* Auto-sync UI toggle */}
               <label className="flex items-center space-x-2 text-slate-300 font-medium cursor-pointer">
                 <input
@@ -1116,7 +1295,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
             <div className="mt-3 pt-3 border-t border-slate-800 max-h-56 overflow-y-auto pr-1 space-y-2 text-xs">
               <div className="flex items-center justify-between text-slate-400 font-bold border-b border-slate-800 pb-1">
                 <span>
-                  Narrated Script for Question {currentPlayingQ.id} {readAllOptions ? '(All Options -> Correct Answer -> Explanation & Tip)' : '(Correct Answer Alone -> Explanation & Tip)'}
+                  Narrated Script for Question {currentPlayingQ.id} {readAllOptions ? '(All Options -> Correct Answer -> Explanations)' : '(Correct Answer Alone -> Explanations)'}
                 </span>
                 <span className="font-mono text-amber-400">{currentPlayingQ.domain}</span>
               </div>
@@ -1144,7 +1323,7 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                 {/* Correct Answer & Explanation Column */}
                 <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
                   <span className="text-emerald-400 font-bold uppercase tracking-wider text-[10px] block">
-                    Correct Answer, Explanation & Exam Tip
+                    Correct Answer & Explanation
                   </span>
                   <p className="text-emerald-300 font-medium text-xs">
                     {Array.isArray(currentPlayingQ.correctOption) 
@@ -1153,6 +1332,18 @@ export const AudioBookPlayer: React.FC<AudioBookPlayerProps> = ({
                     }
                   </p>
                   <p className="text-slate-300 text-[11px] line-clamp-3">{currentPlayingQ.explanation}</p>
+                  {readWhyWrong && currentPlayingQ.wrongOptionsExplanation && (
+                    <div className="pt-1.5 border-t border-slate-800/80 space-y-1">
+                      <span className="text-rose-400 font-bold text-[10px] uppercase tracking-wider block">
+                        Why other options are incorrect:
+                      </span>
+                      {Object.entries(currentPlayingQ.wrongOptionsExplanation).map(([optId, exp]) => (
+                        <p key={optId} className="text-slate-400 text-[10px] leading-tight">
+                          <strong className="text-rose-300">Option {optId}:</strong> {exp}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                   {currentPlayingQ.examTip && (
                     <p className="text-purple-300 text-[11px] italic bg-purple-950/30 p-1.5 rounded border border-purple-900/50">
                       <strong className="font-bold">Exam Tip:</strong> {currentPlayingQ.examTip}
